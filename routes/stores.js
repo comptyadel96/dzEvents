@@ -75,6 +75,12 @@ const upload = multer({
     }
     cb(undefined, true)
   },
+}).array('storePics', 4)
+
+// telecharger l'image
+
+router.put('/:id/storepicture', auth, upload, async (req, res, next) => {
+  const article
 })
 
 module.exports = router
