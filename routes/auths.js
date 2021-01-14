@@ -5,8 +5,9 @@ const crypto = require('crypto')
 const { User } = require('../models/user.js')
 const Joi = require('Joi')
 const passwordComplexity = require('joi-password-complexity').default
-const sendEmail = require('../utils/sendEmail')
+const  sendMailgun = require('../utils/sendMailgun')
 const _ = require('lodash')
+
 
 router.post('/', async (req, res, next) => {
   // verifier si l'utilisateur n'a pas déja un compte
@@ -30,27 +31,22 @@ router.post('/forgotpassword', async (req, res) => {
   const resetToken = await user.getResetPasswordToken()
   await user.save({ validateBeforeSave: false })
   // envoyer le lien du reset password
-  const resetUrl = `${req.protocol}://${req.get(
-    'host'
-  )}/api/auth/resetpassword/${resetToken}`
+  const resetUrl = `${req.protocol}://${req.get('host')}/api/auth/resetpassword/${resetToken}`
+  const message = `Salutation , pour redéfinir votre mot de passe faite un put request ici ${resetUrl} `  
 
-  const message = `Salutation , pour redéfinir votre mot de passe faite un put request ici ${resetUrl} `
   try {
-    await sendEmail({
+    await  sendMailgun({
       email: req.body.email,
-      subject: 'reset password',
+      subject: 'récuperation du mot de passe',
       message,
     })
-    res.status(200).json({
-      success: true,
-      message: 'email sent',
-    })
+    res.status(200).send('email sent') 
   } catch (e) {
     console.log(e)
     user.resetPasswordToken = undefined
     user.resetPasswordExpire = undefined
     await user.save({ validateBeforeSave: false })
-    next()
+    
   }
 })
 

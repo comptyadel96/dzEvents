@@ -25,21 +25,21 @@ router.post('/', async (req, res) => {
     return res
       .status(400)
       .send(
-        'cet email a deja été utilser si vous avez oublier le mot de passe appuyer sur mot de passe oublier'
+        'cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier'
       )
 
   user = new User(
     _.pick(req.body, ['name', 'email', 'password', 'phoneNumber'])
   )
   await user.save()
-  // on donne un ticket pour le nouvelle utilisateur
+  // on donne un ticket pour le nouvelle utilisateuret on crée un header personalisé(x-auth-token)
   const token = await user.createTokenAuth()
   res
     .header('x-auth-token', token)
-    .send(_.pick(user, ['_id', 'name', 'email', 'phoneNumber']))
+    .send(_.pick(user, ['_id', 'name', 'email', 'phoneNumber',' firstTimePublished']))
 })
 
-// mettre a jour les coordonnées de l'utilisateur (juste le nom et l'email)
+// mettre a jour les coordonnées de l'utilisateur (juste le nom ou l'email)
 router.put('/updatedetails', auth, async (req, res) => {
   fieldsToUpdate = {
     name: req.body.name,
@@ -52,7 +52,7 @@ router.put('/updatedetails', auth, async (req, res) => {
   if (!user)
     return res
       .status(500)
-      .send('une erreur s"est produite veuillez réeséyer dans un moment')
+      .send('une erreur s"est produite veuillez réessayer dans un moment')
   res.status(200).json({
     message: 'Bravo vous avez mis à jour vos informations  !',
     data: user,
@@ -68,7 +68,7 @@ router.put('/updatepassword', auth, async (req, res) => {
     user.password
   )
   if (!validatePassword)
-    return res.status(400).send('invalid password try again !')
+    return res.status(400).send('mot de passe invalide!')
 
   const { error } = await validateSchema2(req.body)
   if (error) return res.status(400).send(error.details[0].message)
@@ -81,29 +81,25 @@ router.put('/updatepassword', auth, async (req, res) => {
     .send(_.pick(user, ['name', 'email', '_id', 'phoneNumber']))
 })
 
-// ajouter une photo de profil
+// configurer la photo de profil :
 const upload = multer({
-  // dest: 'profilePictures', on l'enléve pour pouvoir enregistrer l'image de le user model au lieux du dossier profilePictures
+  // dest: 'profilePictures', on l'enléve pour pouvoir enregistrer l'image de le User model au lieux du dossier profilePictures
   limits: {
     fileSize: 2000000,
   },
   fileFilter(req, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/ig)) {
       return cb(
         new Error(
-          'le type de fichier doit étre une image de taille inférieure ou égale a 2MB '
+          'le type de fichier doit étre une image de taille inférieure ou égale a 2MBs '
         )
       )
     }
     cb(undefined, true)
   },
 })
-
-router.post(
-  '/me/profilpicture',
-  auth,
-  upload.single('profilePic'),
-  async (req, res) => {
+// ajouter une photo de profil 
+router.post('/me/profilpicture', auth,upload.single('profilePic'), async (req, res) => {
     let user = await User.findOne({ _id: req.user._id })
     // user.profilePicture = req.file.buffer => hadi 9bal manasta3amlou sharp
     const buffer = await sharp(req.file.buffer)
@@ -123,15 +119,15 @@ router.post(
 router.delete('/me/profilpicture', auth, async (req, res) => {
   let user = await User.findOne({ _id: req.user._id })
   if (!user.profilePicture) {
-    res.status(404).send('aucune photo n a été  trouver')
+    res.status(404).send('aucune photo n a été  trouver pour ce profil')
   }
   user.profilePicture = undefined
   await user.save()
   res.send('la photo a bien été supprimer')
 })
 
-// serving the image to the client :
-router.get('/:id/profilpicture', auth, async (req, res) => {
+// servir l'image au client  :
+router.get('/:id/profilpicture', async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
     if (!user || !user.profilePicture) {

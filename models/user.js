@@ -22,17 +22,8 @@ const userSchema = new mongoose.Schema({
         throw new Error('email invalide ...réessayez  ')
       }
     },
-    phoneNumber: {
-      type: String,
-      required: [
-        true,
-        'veuillez entrer votre numéro de téléphone s il vous plait ',
-      ],
-      maxLength: 10,
-      minLength: 10,
-    },
     required: true,
-    minLength: 0,
+    minLength: 10,
     unique: true,
     trim: true,
   },
@@ -43,8 +34,21 @@ const userSchema = new mongoose.Schema({
     maxLength: 1024,
     trim: true,
   },
-  profilePicture:{
-    type:Buffer
+  phoneNumber: {
+    type: String,
+    // required: [
+    //   true,
+    //   'veuillez entrer votre numéro de téléphone professionnel s il vous plait ',
+    // ],
+    maxLength: 100,
+    minLength: 10,
+    unique: [
+      true,
+      'le numéro de téléphone doit étre unique pour chaque utilisateur',
+    ],
+  },
+  profilePicture: {
+    type: Buffer,
   },
   isAdmin: {
     type: Boolean,
@@ -52,13 +56,16 @@ const userSchema = new mongoose.Schema({
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  firstTimePublished: {
+    type: Boolean,
+    default: false,
   },
 })
+
 // hasher le mot de passe avant de l'enregistrer :
 userSchema.pre('save', async function (next) {
+  // si le mot de passe n'a pas été modifier (mot de passe oublié ou  bien mot de passe changer par l'utilisateur)
+  // alors on saute l'étape de hashage avec next ()
   if (!this.isModified('password')) {
     return next()
   }
@@ -74,7 +81,7 @@ userSchema.methods.createTokenAuth = async function () {
   return token
 }
 
-// methode pour generer un ticket en cas ou on reset un password :
+// methode pour generer un ticket en cas ou on oublie le mot de passe :
 userSchema.methods.getResetPasswordToken = function () {
   // generer le ticket (l'utilisateur recevra ce ticket dans sa boite mail)
   const resetToken = crypto.randomBytes(32).toString('hex')
@@ -89,10 +96,15 @@ userSchema.methods.getResetPasswordToken = function () {
   this.resetPasswordExpire = Date.now() + 120 * 60 * 1000 // 2 heures (1000 milisecondes * 60 = 1 minute * 120 =2 heures)
   return resetToken
 }
+// une methode qui empéche l'utilisateur de poster un article plus qu'une fois dans la section "1 iére fois"
+userSchema.methods.hasPublished = function () {
+  this.firstTimePublished = true
+}
+
 // model:
 const User = mongoose.model('User', userSchema)
 
-// validation schema
+// validation schema with Joi
 const validateSchema = (user) => {
   const complexityOptions = {
     min: 8,

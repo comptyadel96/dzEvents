@@ -21,15 +21,28 @@ const postSchema = new mongoose.Schema(
         'Trip-voyage et sorties',
         'Culturele',
         'Recrutement proffessionel',
-        'fétes'
+        'Fétes',
+        'Artistique'
       ],
       required: [true, 'vous devez specifier une catégorie'],
     },
     région: {
       type: String,
       minlength: 2,
+      required:[true,'vous devez spécifier la région pour cet évènement']
     },
-    image: String,
+    adresse:{
+    type:String,
+    minlength:10,
+    maxlength:1024,
+    required:[true,'vous devez spécifier l adresse pour cet évènement']
+    },
+    organisateur:{
+      type:String,
+      minlength:3,
+      maxlength:1024
+    },
+    image: Buffer,
     description: {
       type: String,
       maxLength: 1024,
@@ -40,13 +53,15 @@ const postSchema = new mongoose.Schema(
         true,
         'vous devez définir une date de début pour cet évenement ',
       ],
+      min:[new Date().toDateString(),'la date doit étre égal ou supérieure a la date actuel']
     },
     dateFin: {
       type: Date,
-      required: [
-        true,
-        'vous devez définir une date de fin pour cet évenement ',
-      ],
+      min:[new Date(Date.now()+1000*60*60*24).toDateString() ,'la date de fin doit étre supérieure a la date du début']
+    },
+    heureDebut:{
+      type:Date,
+      // required:[true,'vous devez définir une heure de début pour cet évènement']
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
