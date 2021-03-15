@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const path = require('path')
 const _ = require('lodash')
 const { User, validateSchema } = require('../models/user.js')
 const Joi = require('joi')
@@ -8,10 +9,13 @@ const auth = require('../middlewares/auth')
 const bcrypt = require('bcrypt')
 const multer = require('multer')
 const sharp = require('sharp')
+const { cloudinaryConfig, uploader } = require('../middlewares/cloudinaryConfig')
+router.use('*', cloudinaryConfig)
+const DatauriParser = require('datauri/parser')
 
-// avoir les infos l'utilisateur déja connecter
+// voir les infos de l'utilisateur déja connecter (ses propres infos de compte)
 router.get('/me', auth, async (req, res) => {
-  const user = await User.findById(req.user._id).select('-password')
+  const user = await User.findOne({ _id: req.user._id }).select('-password')
   res.send(user)
 })
 
@@ -21,22 +25,13 @@ router.post('/', async (req, res) => {
   if (error) return res.status(400).send(error.details[0].message)
   // verifier si l'utilisateur n'a pas déja un compte
   let user = await User.findOne({ email: req.body.email })
-  if (user)
-    return res
-      .status(400)
-      .send(
-        'cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier'
-      )
+  if (user) return res.status(400).send('cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier')
 
-  user = new User(
-    _.pick(req.body, ['name', 'email', 'password', 'phoneNumber'])
-  )
+  user = new User(_.pick(req.body, ['name', 'email', 'password','confirmPassword', 'phoneNumber']))
   await user.save()
-  // on donne un ticket pour le nouvelle utilisateuret on crée un header personalisé(x-auth-token)
+  // on donne un ticket pour le nouvelle utilisateur et on crée un header personalisé(x-auth-token)
   const token = await user.createTokenAuth()
-  res
-    .header('x-auth-token', token)
-    .send(_.pick(user, ['_id', 'name', 'email', 'phoneNumber',' firstTimePublished']))
+  res.header('x-auth-token', token).send(_.pick(user, ['_id', 'name', 'email', 'phoneNumber', ' firstTimePublished']))
 })
 
 // mettre a jour les coordonnées de l'utilisateur (juste le nom ou l'email)
@@ -49,10 +44,7 @@ router.put('/updatedetails', auth, async (req, res) => {
     runValidators: true,
     new: true,
   })
-  if (!user)
-    return res
-      .status(500)
-      .send('une erreur s"est produite veuillez réessayer dans un moment')
+  if (!user) return res.status(500).send('une erreur s"est produite veuillez réessayer dans un moment')
   res.status(200).json({
     message: 'Bravo vous avez mis à jour vos informations  !',
     data: user,
@@ -62,53 +54,49 @@ router.put('/updatedetails', auth, async (req, res) => {
 // mettre à jour le mot de passe de l'utilisateur
 router.put('/updatepassword', auth, async (req, res) => {
   const user = await User.findById(req.user._id)
-
-  const validatePassword = await bcrypt.compare(
-    req.body.password,
-    user.password
-  )
-  if (!validatePassword)
-    return res.status(400).send('mot de passe invalide!')
+  // il entre son mot de passe actuel et on le verifie
+  const validatePassword = await bcrypt.compare(req.body.password, user.password)
+  if (!validatePassword) return res.status(400).send('mot de passe invalide!')
 
   const { error } = await validateSchema2(req.body)
   if (error) return res.status(400).send(error.details[0].message)
-
+  // si le mot de passe actuel est juste alors on met à jour le nouveau MDP
   user.password = req.body.newPassword
   await user.save()
   const token = await user.createTokenAuth()
-  res
-    .header('x-auth-token', token)
-    .send(_.pick(user, ['name', 'email', '_id', 'phoneNumber']))
+  res.header('x-auth-token', token).send(_.pick(user, ['name', 'email', '_id', 'phoneNumber', 'firstTimePublished']))
 })
 
 // configurer la photo de profil :
 const upload = multer({
   // dest: 'profilePictures', on l'enléve pour pouvoir enregistrer l'image de le User model au lieux du dossier profilePictures
   limits: {
-    fileSize: 2000000,
+    fileSize: 1000000,
   },
   fileFilter(req, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/ig)) {
-      return cb(
-        new Error(
-          'le type de fichier doit étre une image de taille inférieure ou égale a 2MBs '
-        )
-      )
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/gi)) {
+      return cb(new Error('le fichier doit étre au format image de taille inférieure ou égale a 1MBs'))
     }
     cb(undefined, true)
   },
-})
-// ajouter une photo de profil 
-router.post('/me/profilpicture', auth,upload.single('profilePic'), async (req, res) => {
+}).single('profilePic')
+// ajouter une photo de profil
+router.post(
+  '/me/profilpicture',
+  auth,
+  upload,
+  async (req, res) => {
     let user = await User.findOne({ _id: req.user._id })
-    // user.profilePicture = req.file.buffer => hadi 9bal manasta3amlou sharp
-    const buffer = await sharp(req.file.buffer)
-      .png()
-      .resize({ width: 250, height: 250 })
-      .toBuffer()
-    user.profilePicture = buffer
-    await user.save()
-    res.send('fichier télécharger avec succés')
+    const buffer = await sharp(req.file.buffer).png().resize({ width: 200, height: 250 }).toBuffer()
+    const parser = new DatauriParser()
+    const file = parser.format(path.extname(req.file.originalname).toString(), buffer).content
+    if (req.file) {
+      await uploader.upload(file).then(async (result) => {
+        user.profilePicture = result.url
+        await user.save()
+        res.send('photo télécharger avec succés')
+      })
+    }
   },
   (error, req, res, next) => {
     res.status(400).send({ erreur: error.message })

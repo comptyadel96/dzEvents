@@ -12,7 +12,7 @@ const storeSchema = new mongoose.Schema(
     },
     prix: {
       type: String,
-      minlength: 4,
+      minlength: 1,
       maxlength: 100,
       required: [true, 'veuillez défénir un prix à votre article ou service !'],
     },
@@ -27,9 +27,7 @@ const storeSchema = new mongoose.Schema(
       minlength: 10,
       maxlength: 2200,
     },
-    photo: {
-      type:Buffer
-    },
+    photos: [{type:mongoose.Schema.Types.ObjectId,ref:'Photo'}],
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -38,12 +36,15 @@ const storeSchema = new mongoose.Schema(
   },
   { timestamps: true }
 )
+storeSchema.index({ article: 'text' })
+
 const validateArticle = (article) => {
   const schema = Joi.object({
     article: Joi.string().min(5).max(1024).required(),
     prix: Joi.string().min(4).max(1024).required(),
     description: Joi.string().min(10),
     wilaya: Joi.string().min(2).max(100),
+    photos: Joi.array(),
   })
 
   return schema.validate(article)

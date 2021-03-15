@@ -6,10 +6,8 @@ const firstTimeSchema = new mongoose.Schema(
       type: String,
       minlength: 6,
       maxlength: 1024,
-      required: [
-        true,
-        'veuillez svp indiquer un titre à votre premier évènement! ',
-      ],
+      required: [true, 'veuillez svp indiquer un titre à votre premier évènement! '],
+      trim: true,
     },
     wilaya: {
       type: String,
@@ -17,15 +15,17 @@ const firstTimeSchema = new mongoose.Schema(
       maxlength: 100,
       required: [true, 'vous devez entrer le nom ou le numéro de la wilaya'],
     },
-    adresse:{
-      type:String,
-      maxlength:1024 
+    adresse: {
+      type: String,
+      maxlength: 1024,
     },
     description: {
       type: String,
       maxlength: 1024,
     },
-    photo: Buffer,
+    photo: {
+      type: String,
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -36,4 +36,4 @@ const firstTimeSchema = new mongoose.Schema(
 )
 
 const FirstTime = mongoose.model('FirstTime', firstTimeSchema)
-module.exports = { FirstTime }
+module.exports = FirstTime

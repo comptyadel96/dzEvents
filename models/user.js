@@ -5,7 +5,6 @@ const validator = require('validator')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const bcrypt = require('bcrypt')
-const { Buffer } = require('buffer')
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -19,11 +18,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     validate(val) {
       if (!validator.isEmail(val)) {
-        throw new Error('email invalide ...réessayez  ')
+        throw new Error('email invalide ...réessayez')
       }
     },
     required: true,
     minLength: 10,
+    maxlength:100,
     unique: true,
     trim: true,
   },
@@ -36,11 +36,11 @@ const userSchema = new mongoose.Schema({
   },
   phoneNumber: {
     type: String,
-    // required: [
-    //   true,
-    //   'veuillez entrer votre numéro de téléphone professionnel s il vous plait ',
-    // ],
-    maxLength: 100,
+    required: [
+      true,
+      'veuillez entrer votre numéro de téléphone professionnel s il vous plait ',
+    ],
+    maxLength: 50,
     minLength: 10,
     unique: [
       true,
@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema({
     ],
   },
   profilePicture: {
-    type: Buffer,
+    type: String,
   },
   isAdmin: {
     type: Boolean,
@@ -65,7 +65,7 @@ const userSchema = new mongoose.Schema({
 // hasher le mot de passe avant de l'enregistrer :
 userSchema.pre('save', async function (next) {
   // si le mot de passe n'a pas été modifier (mot de passe oublié ou  bien mot de passe changer par l'utilisateur)
-  // alors on saute l'étape de hashage avec next ()
+  // alors on saute l'étape de hashage avec next () pour ne pas le hasher une 2iéme fois
   if (!this.isModified('password')) {
     return next()
   }
@@ -75,7 +75,7 @@ userSchema.pre('save', async function (next) {
 
 // methode pour creer un ticket jwt
 userSchema.methods.createTokenAuth = async function () {
-  const token = await jwt.sign({ _id: this._id }, process.env.JWT_TOKEN_KEY, {
+  const token = jwt.sign({ _id: this._id }, process.env.JWT_TOKEN_KEY, {
     expiresIn: process.env.JWT_EXPIRE,
   })
   return token
@@ -119,6 +119,7 @@ const validateSchema = (user) => {
     name: Joi.string().min(5).max(50).required(),
     email: Joi.string().min(5).max(255).email().required(),
     password: passwordComplexity(complexityOptions).required(),
+    confirmPassword: Joi.string().valid(Joi.ref('password')).required(), 
     phoneNumber: Joi.string().min(10).max(10).required(),
   })
 
