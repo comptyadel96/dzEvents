@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const { Store, validateArticle } = require('../models/store')
+const { Store } = require('../models/store')
 const DatauriParser = require('datauri/parser')
 const multer = require('multer')
 const path = require('path')
@@ -21,15 +21,14 @@ router.get('/', async (req, res) => {
   if (req.query.searchItem) {
     const storeArticle = await Store.find({ $text: { $search: req.query.searchItem } })
       .sort({ createdAt: -1 })
-
-      .populate('owner', ' -password -profilePicture')
+      .populate('owner', ' -password -__v')
       .populate('photos', 'url _id ')
-    if (!storeArticle) return res.status(404).send('aucun element trouvé dsl')
+    if (!storeArticle) return res.status(404).send('aucun article trouvé dsl')
 
-    res.status(200).send(storeArticle)
+    return res.status(200).send(storeArticle)
   } else {
-    const article = await Store.find().skip(startIndex).limit(limit).sort({ createdAt: -1 }).populate('owner', ' -password -profilePicture').populate('photos', 'url _id')
-    res.status(200).send(article)
+    const article = await Store.find().skip(startIndex).limit(limit).sort({ createdAt: -1 }).populate('owner', ' -password -profilePicture').populate('photos', 'url _id ')
+    return res.status(200).send(article)
   }
 })
 // trouver un article par son id :
@@ -45,10 +44,19 @@ router.get('/publications/me', auth, async (req, res) => {
   res.status(200).send(article)
 })
 //configurer multer
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, './public/storePictures')
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, Date.now() + '-' + file.originalname)
+//   },
+// })
 const upload = multer({
   limits: {
     fileSize: 2500000,
   },
+  // storage: storage,
   fileFilter(req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/gi)) {
       return cb(new Error('le type de fichier doit étre une image de taille inférieure ou égale a 2.5MBs '))
@@ -56,20 +64,18 @@ const upload = multer({
     cb(undefined, true)
   },
 }).array('storePics', 5)
-// creer un nouvel article à vendre:
-router.post('/', [auth, upload], async (req, res) => {
-  const { error } = await validateArticle(req.body)
-  if (error) return res.status(400).send(error.details[0].message)
 
+// creer un nouvel article à vendre:
+router.post('/', upload, async (req, res) => {
+  //auth, raja3ha =>
   let article = await Store.create({
     article: req.body.article,
     prix: req.body.prix,
     wilaya: req.body.wilaya,
     description: req.body.description,
-    owner: req.user._id,
+    // owner: req.user._id,
   })
 
-  // iterer tous les photos dans le tableau puis les redimentionner avec sharp (async await et biensur Promise.all())
   if (req.files) {
     try {
       await Promise.all(
@@ -78,15 +84,15 @@ router.post('/', [auth, upload], async (req, res) => {
           // convertir le buffer en lien
           const parser = new DatauriParser()
           const files = parser.format(path.extname(file.originalname).toString(), buffer).content
+
           await uploader.upload(files.toString()).then(async (result) => {
             if (article.photos.length < 5) {
               const photo = await Photos.create({ url: result.url })
-              article.photos.push(photo)
-              console.log(result)
+              await article.photos.push(photo)
               await article.save()
-              return res.status(200).send('photos telecharger avec succes')
+              res.status(200).send('photos telecharger avec succes')
             } else {
-              return res.send('pas plus de 5 photos svp')
+              res.status(400).send('pas plus de 5 photos svp').end()
             }
           })
         })
@@ -94,11 +100,10 @@ router.post('/', [auth, upload], async (req, res) => {
     } catch (e) {
       console.log(e)
     }
-  } else {
-    await article.save()
-    res.status(200).send(article)
   }
+  !req.files && res.status(200).send(article)
 })
+
 // ajouter d'autre photos aprés la création de l'article dans le store (si jamais l'utilisateur voudrait modifier ou ajiouter des photos)
 router.patch('/:id/pictures', [auth, upload], async (req, res) => {
   let article = await Store.findOne({ _id: req.params.id, owner: req.user._id })

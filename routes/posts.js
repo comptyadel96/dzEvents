@@ -3,36 +3,42 @@ const router = express.Router()
 const { Posts } = require('../models/posts')
 const _ = require('lodash')
 const multer = require('multer')
-const sharp = require('sharp')
+
 //middleware
 const auth = require('../middlewares/auth')
 
 // avoir la liste de tous les événements:
 router.get('/', async (req, res) => {
+  // supprimer un évènement apres 6 mois de sa date de fin (90jours)
+  await Posts.deleteMany({ dateFin: { $lte: Date.now() - 1000 * 60 * 60 * 24 * 180 } })
+
   // pagination des événements :
   const page = parseInt(req.query.page)
   const limit = parseInt(req.query.limit)
   const startIndex = (page - 1) * limit
-  const endIndex = page * limit
+
   //filtrer les événements:
   let categorie = {}
   // dans le cas ou on specifie une categorie dans l'url =>
   if (req.query.categorie) {
     categorie = req.query.categorie
-    const posts = await Posts.find({ categorie })
-      .sort({ createdAt: -1 })
-      .skip(startIndex)
-      .limit(limit)
-      .populate('owner','-password -__v')
-    res.status(200).send(posts)
+    const posts = await Posts.find({ categorie }).sort({ createdAt: -1 }).skip(startIndex).limit(limit).populate('owner', '-password -__v')
+    // avoir le status de l'évènement (en cours ,terminé ou bientot)
+    // await posts.getStatus()
+    return res.status(200).send(posts)
   }
-  // dans le cas ou on filtre pas la requéte =>
-  const posts = await Posts.find()
-    .sort({ createdAt: -1 })
-    .skip(startIndex)
-    .limit(limit)
-    .populate('owner','-password -__v')
 
+  // faire la recherche dans le store (front end barre de recherche)
+  if (req.query.searchEvent) {
+    const post = await Posts.find({ $text: { $search: req.query.searchEvent } })
+      .sort({ createdAt: -1 })
+      .populate('owner', '-password -__v')
+    if (!post) return res.status(404).send('aucun evenement trouver')
+    return res.status(200).send(post)
+  }
+
+  // dans le cas ou on filtre pas la requéte =>
+  const posts = await Posts.find().sort({ createdAt: -1 }).skip(startIndex).limit(limit).populate('owner', '-password -__v')
   res.status(200).send(posts)
 })
 
@@ -50,19 +56,44 @@ router.get('/me/myevents', auth, async (req, res) => {
 // voir un seul  évènement  par son id:
 router.get('/:id', async (req, res) => {
   const post = await Posts.findById(req.params.id)
-  if (!post)
-    return res.status(404).send('cet évènement n"a pas été trouvé désoler')
-    res.status(200).send(post)
+  await post.getStatus()
+  await post.save()
+  if (!post) return res.status(404).send('cet évènement n"a pas été trouvé désoler')
+  res.status(200).send(post)
 })
+// configurer multer
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, './public/images')
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname)
+  },
+})
+const upload = multer({
+  limits: {
+    fileSize: 3000000,
+  },
+  storage: storage,
+
+  fileFilter(req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error('le type de fichier doit étre une image de taille inférieure ou égale a 3MBs'))
+    }
+    cb(undefined, true)
+  },
+}).single('eventPic')
 
 // ajouter un événement
-router.post('/', auth, async (req, res) => {
-  const { titre, categorie, dateDebut, dateFin,région,description,heureDebut,adresse,organisateur } = req.body
+router.post('/', upload, async (req, res) => {
+  // auth, raja3ha
+  const { titre, categorie, dateDebut, dateFin, region, description, heureDebut, adresse, organisateur, geometry } = req.body
   let post = await Posts.create({
     titre,
     categorie,
-    owner: req.user._id,
-    région,
+    geometry,
+    // owner: req.user._id,
+    region,
     adresse,
     organisateur,
     description,
@@ -70,59 +101,15 @@ router.post('/', auth, async (req, res) => {
     dateDebut,
     dateFin,
   })
-
-  res
-    .status(200)
-    .send(post)
-})
-
-// configurer la photo pour l'evenement
-const upload = multer({
-  limits: {
-    fileSize: 3000000,
-  },
-  fileFilter(req, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      return cb(
-        new Error(
-          'le type de fichier doit étre une image de taille inférieure ou égale a 3MBs'
-        )
-      )
-    }
-    cb(undefined, true)
-  },
-})
-// ajouter la photo pour l'événement
-router.post( '/:id/picture',
-  auth,
-  upload.single('eventPic'),
-  async (req, res) => {
-    let post = await Posts.findOne({_id:req.params.id ,owner: req.user._id })
-    const buffer = await sharp(req.file.buffer)
-      .png()
-      .resize({ width: 250, height: 250 })
-      .toBuffer()
-    post.image = buffer
+  if (req.file) {
+    post.image = req.file.path.replace('public',process.env.PORT|| 'http://192.168.1.38:3900/')
     await post.save()
-    res.send('photo télécharger avec succés')
-  },
-  (error, req, res, next) => {
-    res.status(400).send({ erreur: error.message })
-  }
-)
-// servir l'image au client  :
-router.get('/:id/eventpicture', async (req, res) => {
-  try {
-    const post = await Posts.findById(req.params.id)
-    if (!post || !post.image) {
-      throw new Error()
-    }
-    res.set('Content-Type', 'image/png')
-    res.send(post.image)
-  } catch (e) {
-    res.status(404)
+    return res.status(200).send('photo telecharger avec succeés')
+  } else {
+    return res.status(200).send(post)
   }
 })
+
 // supprimer l'image de l'evenement:
 router.delete('/:id/eventpicture', auth, async (req, res) => {
   let post = await Posts.findOne({ owner: req.user._id, _id: req.params.id })
@@ -152,18 +139,7 @@ router.put('/:id', auth, async (req, res) => {
       )
       if (!post) return res.status(400).send('une erreur est servenu!')
       await post.save()
-      res
-        .status(200)
-        .send(
-          _.pick(post, [
-            'titre',
-            'categorie',
-            'dateDebut',
-            'dateFin',
-            'région',
-            'description',
-          ])
-        )
+      res.status(200).send(_.pick(post, ['titre', 'categorie', 'dateDebut', 'dateFin', 'région', 'description']))
     } catch (e) {
       res.status(404).send('error')
     }
@@ -177,10 +153,7 @@ router.delete('/:id', auth, async (req, res) => {
   const _id = req.params.id
   try {
     const post = await Posts.findOneAndDelete({ _id, owner: req.user._id })
-    if (!post)
-      return res
-        .status(404)
-        .send('vous n"étes pas autoriser a faire cet action')
+    if (!post) return res.status(404).send('vous n"étes pas autoriser a faire cet action')
     res.status(200).send(post)
   } catch (e) {
     console.log(e)

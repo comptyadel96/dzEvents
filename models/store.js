@@ -27,27 +27,16 @@ const storeSchema = new mongoose.Schema(
       minlength: 10,
       maxlength: 2200,
     },
-    photos: [{type:mongoose.Schema.Types.ObjectId,ref:'Photo'}],
+    photos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Photo' }],
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      // required: true,
     },
   },
   { timestamps: true }
 )
 storeSchema.index({ article: 'text' })
 
-const validateArticle = (article) => {
-  const schema = Joi.object({
-    article: Joi.string().min(5).max(1024).required(),
-    prix: Joi.string().min(4).max(1024).required(),
-    description: Joi.string().min(10),
-    wilaya: Joi.string().min(2).max(100),
-    photos: Joi.array(),
-  })
-
-  return schema.validate(article)
-}
 const Store = mongoose.model('Store', storeSchema)
-module.exports = { Store, validateArticle }
+module.exports = { Store }
