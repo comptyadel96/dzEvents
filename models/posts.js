@@ -48,11 +48,17 @@ const postSchema = new mongoose.Schema(
     dateDebut: {
       type: Date,
       // required: [true, 'vous devez définir une date de début pour cet évenement '],
-      min: [new Date(Date.now() + 1000 * 60 * 5), 'la date doit étre égal ou supérieure a la date actuel'],
+      min: [
+        new Date(Date.now() + 1000 * 60 * 5),
+        'la date doit étre égal ou supérieure a la date actuel',
+      ],
     },
     dateFin: {
       type: Date,
-      min: [new Date(Date.now() + 1000 * 60 * 60).toDateString(), 'la date de fin doit étre supérieure a la date du début'],
+      min: [
+        new Date(Date.now() + 1000 * 60 * 60).toDateString(),
+        'la date de fin doit étre supérieure a la date du début',
+      ],
     },
     geometry: {
       type: {
@@ -74,16 +80,24 @@ const postSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-postSchema.methods.getStatus=function(){
-  if (this.dateFin < Date.now()) {
+postSchema.methods.getStatus = function () {
+  if (
+    this.dateFin.toLocaleDateString() <
+    new Date(Date.now()).toLocaleDateString()
+  ) {
     this.status = 'terminé'
-  }else if (this.dateDebut>=Date.now()&&this.dateFin<Date.now()){
+  } else if (
+    this.dateDebut.toLocaleDateString() <=
+      new Date(Date.now()).toLocaleDateString() &&
+    this.dateFin.toLocaleDateString() >=
+      new Date(Date.now()).toLocaleDateString()
+  ) {
     this.status = 'en cours'
-  }else{
-    this.status='à venir'
+  } else {
+    this.status = 'à venir'
   }
+  
 }
-
 
 postSchema.index({ titre: 'text' })
 

@@ -51,9 +51,9 @@ app.use('/dzevents/v1/firsttime',firstTime)
 app.use(cookieParser())
 
 // app listening
-const port = process.env.PORT || 3900
-app.listen(port, () => {
+const PORT = process.env.PORT || 3900
+app.listen(PORT, () => {
   console.log(
-    `app listening on port ${port} in ${process.env.NODE_ENV} mode`.blue.bold
+    `app listening on port ${PORT} in ${process.env.NODE_ENV} mode`.blue.bold
   )
 })

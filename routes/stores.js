@@ -104,7 +104,7 @@ router.post('/', upload, async (req, res) => {
   !req.files && res.status(200).send(article)
 })
 
-// ajouter d'autre photos aprés la création de l'article dans le store (si jamais l'utilisateur voudrait modifier ou ajiouter des photos)
+// ajouter d'autre photos aprés la création de l'article dans le store (si jamais l'utilisateur voudrait modifier ou ajouter des photos)
 router.patch('/:id/pictures', [auth, upload], async (req, res) => {
   let article = await Store.findOne({ _id: req.params.id, owner: req.user._id })
   if (req.files) {

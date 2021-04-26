@@ -57,7 +57,6 @@ router.get('/me/myevents', auth, async (req, res) => {
 router.get('/:id', async (req, res) => {
   const post = await Posts.findById(req.params.id)
   await post.getStatus()
-  await post.save()
   if (!post) return res.status(404).send('cet évènement n"a pas été trouvé désoler')
   res.status(200).send(post)
 })
@@ -102,7 +101,7 @@ router.post('/', upload, async (req, res) => {
     dateFin,
   })
   if (req.file) {
-    post.image = req.file.path.replace('public',process.env.PORT|| 'http://192.168.1.38:3900/')
+    post.image = req.file.path.replace('public', process.env.PORT || 'http://192.168.1.38:3900/')
     await post.save()
     return res.status(200).send('photo telecharger avec succeés')
   } else {
