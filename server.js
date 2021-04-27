@@ -21,7 +21,7 @@ const firstTime=require('./routes/firstTimes')
 
 // connect to Mongo
 mongoose
-  .connect( process.env.MONGODB_PROD, {
+  .connect( process.env.MONGODB_PROD.toString(), {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
