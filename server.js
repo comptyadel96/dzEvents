@@ -21,7 +21,7 @@ const firstTime=require('./routes/firstTimes')
 
 // connect to Mongo
 mongoose
-  .connect(process.env.MONGODB_PROD, {
+  .connect("mongodb+srv://adel-boullif:THE-sexylionof136@cluster0.cxfcm.mongodb.net/dzEvents?retryWrites=true&w=majority", {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true,
