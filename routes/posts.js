@@ -76,20 +76,11 @@ router.get('/:id', async (req, res) => {
     return res.status(404).send('cet évènement n"a pas été trouvé désoler')
   res.status(200).send(post)
 })
-// configurer multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, './public/images')
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname)
-  },
-})
+
 const upload = multer({
   limits: {
     fileSize: 3000000,
   },
-  storage: storage,
 
   fileFilter(req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
