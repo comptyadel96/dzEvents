@@ -135,7 +135,7 @@ router.post('/', upload, async (req, res) => {
       buffer
     ).content
     await uploader.upload(file.toString()).then(async (error, result) => {
-      if (err) {
+      if (error) {
         console.log(error)
       }
       post.image = result.url
