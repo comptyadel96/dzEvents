@@ -8,9 +8,7 @@ const sharp = require('sharp')
 const Photos = require('../models/photo')
 // middleware
 const auth = require('../middlewares/auth')
-const { cloudinaryConfig, uploader } = require('../middlewares/cloudinaryConfig')
-
-// router.use('*', cloudinaryConfig)
+const { uploader } = require('../middlewares/cloudinaryConfig')
 
 // voir tous les articles dans le store:
 router.get('/', async (req, res) => {
