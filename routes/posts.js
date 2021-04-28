@@ -9,6 +9,8 @@ const {
   cloudinaryConfig,
   uploader,
 } = require('../middlewares/cloudinaryConfig')
+
+router.use('*', cloudinaryConfig)
 const DatauriParser = require('datauri/parser')
 //middleware
 const auth = require('../middlewares/auth')
