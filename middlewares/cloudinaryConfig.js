@@ -1,5 +1,5 @@
 
-const { config, uploader }= require('cloudinary') 
+const { config, uploader }= require('cloudinary').v2 
  // on configure cloudinary avec nos données de compte persos 
  // ouvrer un compte gratuitmenet ici =>http://cloudinary.com 
 const cloudinaryConfig = (req, res, next) => {

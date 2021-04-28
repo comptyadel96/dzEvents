@@ -81,6 +81,7 @@ router.post('/', upload, async (req, res) => {
             if(error){
               console.log(error)
             }
+            
             if (article.photos.length < 5) {
               const photo = await Photos.create({ url: result.url })
               await article.photos.push(photo)
