@@ -142,7 +142,10 @@ router.post('/', upload, async (req, res) => {
       path.extname(req.file.originalname).toString(),
       buffer
     ).content
-    await uploader.upload(file.toString()).then(async (result) => {
+    await uploader.upload(file.toString()).then(async (error, result) => {
+      if (err) {
+        console.log(error)
+      }
       post.image = result.url
       await post.save()
       return res.status(200).send('photo telecharger avec succeés')
