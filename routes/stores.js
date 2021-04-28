@@ -43,15 +43,7 @@ router.get('/publications/me', auth, async (req, res) => {
   if (!article) return res.status(404).send('aucun article trouvé assurez vous de bien saisir votre recherche')
   res.status(200).send(article)
 })
-//configurer multer
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, './public/storePictures')
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, Date.now() + '-' + file.originalname)
-//   },
-// })
+
 const upload = multer({
   limits: {
     fileSize: 2500000,

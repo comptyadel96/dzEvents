@@ -3,14 +3,21 @@ const router = express.Router()
 const { Posts } = require('../models/posts')
 const _ = require('lodash')
 const multer = require('multer')
-
+const sharp = require('sharp')
+const {
+  cloudinaryConfig,
+  uploader,
+} = require('../middlewares/cloudinaryConfig')
+const DatauriParser = require('datauri/parser')
 //middleware
 const auth = require('../middlewares/auth')
 
 // avoir la liste de tous les événements:
 router.get('/', async (req, res) => {
   // supprimer un évènement apres 6 mois de sa date de fin (90jours)
-  await Posts.deleteMany({ dateFin: { $lte: Date.now() - 1000 * 60 * 60 * 24 * 180 } })
+  await Posts.deleteMany({
+    dateFin: { $lte: Date.now() - 1000 * 60 * 60 * 24 * 180 },
+  })
 
   // pagination des événements :
   const page = parseInt(req.query.page)
@@ -22,7 +29,11 @@ router.get('/', async (req, res) => {
   // dans le cas ou on specifie une categorie dans l'url =>
   if (req.query.categorie) {
     categorie = req.query.categorie
-    const posts = await Posts.find({ categorie }).sort({ createdAt: -1 }).skip(startIndex).limit(limit).populate('owner', '-password -__v')
+    const posts = await Posts.find({ categorie })
+      .sort({ createdAt: -1 })
+      .skip(startIndex)
+      .limit(limit)
+      .populate('owner', '-password -__v')
     // avoir le status de l'évènement (en cours ,terminé ou bientot)
     // await posts.getStatus()
     return res.status(200).send(posts)
@@ -38,7 +49,11 @@ router.get('/', async (req, res) => {
   }
 
   // dans le cas ou on filtre pas la requéte =>
-  const posts = await Posts.find().sort({ createdAt: -1 }).skip(startIndex).limit(limit).populate('owner', '-password -__v')
+  const posts = await Posts.find()
+    .sort({ createdAt: -1 })
+    .skip(startIndex)
+    .limit(limit)
+    .populate('owner', '-password -__v')
   res.status(200).send(posts)
 })
 
@@ -57,7 +72,8 @@ router.get('/me/myevents', auth, async (req, res) => {
 router.get('/:id', async (req, res) => {
   const post = await Posts.findById(req.params.id)
   await post.getStatus()
-  if (!post) return res.status(404).send('cet évènement n"a pas été trouvé désoler')
+  if (!post)
+    return res.status(404).send('cet évènement n"a pas été trouvé désoler')
   res.status(200).send(post)
 })
 // configurer multer
@@ -77,7 +93,11 @@ const upload = multer({
 
   fileFilter(req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
-      return cb(new Error('le type de fichier doit étre une image de taille inférieure ou égale a 3MBs'))
+      return cb(
+        new Error(
+          'le type de fichier doit étre une image de taille inférieure ou égale a 3MBs'
+        )
+      )
     }
     cb(undefined, true)
   },
@@ -86,7 +106,18 @@ const upload = multer({
 // ajouter un événement
 router.post('/', upload, async (req, res) => {
   // auth, raja3ha
-  const { titre, categorie, dateDebut, dateFin, region, description, heureDebut, adresse, organisateur, geometry } = req.body
+  const {
+    titre,
+    categorie,
+    dateDebut,
+    dateFin,
+    region,
+    description,
+    heureDebut,
+    adresse,
+    organisateur,
+    geometry,
+  } = req.body
   let post = await Posts.create({
     titre,
     categorie,
@@ -101,9 +132,21 @@ router.post('/', upload, async (req, res) => {
     dateFin,
   })
   if (req.file) {
-    post.image = req.file.path.replace('public', process.env.PORT || 'http://192.168.1.38:3900/')
-    await post.save()
-    return res.status(200).send('photo telecharger avec succeés')
+    const buffer = await sharp(req.file.buffer)
+      .resize({ height: 350, width: 350 })
+      .png()
+      .toBuffer()
+    // convertir le buffer en lien
+    const parser = new DatauriParser()
+    const file = parser.format(
+      path.extname(file.originalname).toString(),
+      buffer
+    ).content
+    await uploader.upload(file.toString()).then(async (result) => {
+      post.image = result.url
+      await post.save()
+      return res.status(200).send('photo telecharger avec succeés')
+    })
   } else {
     return res.status(200).send(post)
   }
@@ -138,7 +181,18 @@ router.put('/:id', auth, async (req, res) => {
       )
       if (!post) return res.status(400).send('une erreur est servenu!')
       await post.save()
-      res.status(200).send(_.pick(post, ['titre', 'categorie', 'dateDebut', 'dateFin', 'région', 'description']))
+      res
+        .status(200)
+        .send(
+          _.pick(post, [
+            'titre',
+            'categorie',
+            'dateDebut',
+            'dateFin',
+            'région',
+            'description',
+          ])
+        )
     } catch (e) {
       res.status(404).send('error')
     }
@@ -152,7 +206,10 @@ router.delete('/:id', auth, async (req, res) => {
   const _id = req.params.id
   try {
     const post = await Posts.findOneAndDelete({ _id, owner: req.user._id })
-    if (!post) return res.status(404).send('vous n"étes pas autoriser a faire cet action')
+    if (!post)
+      return res
+        .status(404)
+        .send('vous n"étes pas autoriser a faire cet action')
     res.status(200).send(post)
   } catch (e) {
     console.log(e)
