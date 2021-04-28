@@ -139,7 +139,7 @@ router.post('/', upload, async (req, res) => {
     // convertir le buffer en lien
     const parser = new DatauriParser()
     const file = parser.format(
-      path.extname(file.originalname).toString(),
+      path.extname(req.file.originalname).toString(),
       buffer
     ).content
     await uploader.upload(file.toString()).then(async (result) => {
@@ -189,7 +189,7 @@ router.put('/:id', auth, async (req, res) => {
             'categorie',
             'dateDebut',
             'dateFin',
-            'région',
+            'region',
             'description',
           ])
         )
