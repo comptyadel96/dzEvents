@@ -10,7 +10,7 @@ const Photos = require('../models/photo')
 const auth = require('../middlewares/auth')
 const { cloudinaryConfig, uploader } = require('../middlewares/cloudinaryConfig')
 
-router.use('*', cloudinaryConfig)
+// router.use('*', cloudinaryConfig)
 
 // voir tous les articles dans le store:
 router.get('/', async (req, res) => {
