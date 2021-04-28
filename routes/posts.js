@@ -4,6 +4,7 @@ const { Posts } = require('../models/posts')
 const _ = require('lodash')
 const multer = require('multer')
 const sharp = require('sharp')
+const path = require('path')
 const {
   cloudinaryConfig,
   uploader,
