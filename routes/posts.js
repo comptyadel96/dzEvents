@@ -134,7 +134,7 @@ router.post('/', upload, async (req, res) => {
       path.extname(req.file.originalname).toString(),
       buffer
     ).content
-    await uploader.upload(file.toString()).then(async (error, result) => {
+    await uploader.upload(file.toString()).then(async ( result,error) => {
       if (error) {
         console.log(error)
       }
