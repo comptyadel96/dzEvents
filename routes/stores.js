@@ -77,7 +77,10 @@ router.post('/', upload, async (req, res) => {
           const parser = new DatauriParser()
           const files = parser.format(path.extname(file.originalname).toString(), buffer).content
 
-          await uploader.upload(files.toString()).then(async (result) => {
+          await uploader.upload(files.toString()).then(async (result,error) => {
+            if(error){
+              console.log(error)
+            }
             if (article.photos.length < 5) {
               const photo = await Photos.create({ url: result.url })
               await article.photos.push(photo)
