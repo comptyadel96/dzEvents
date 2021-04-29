@@ -68,7 +68,7 @@ router.post("/", upload, async (req, res) => {
       description: req.body.description,
       adresse: req.body.adresse,
       wilaya: req.body.wilaya,
-      owner: req.user._id,
+      // owner: req.user._id,
     })
     if (req.file) {
       const buffer = await sharp(req.file.buffer)
@@ -90,8 +90,8 @@ router.post("/", upload, async (req, res) => {
       })
     }
     // appliquer la methode pour que l'utilisateur ne puisse pas poster plus qu'un article
-    await user.hasPublished()
-    await user.save()
+    // await user.hasPublished()
+    // await user.save()
 
     res.status(200).send(first)
   // } else {
