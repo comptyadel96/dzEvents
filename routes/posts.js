@@ -1,22 +1,17 @@
-const express = require('express')
+const express = require("express")
 const router = express.Router()
-const { Posts } = require('../models/posts')
-const _ = require('lodash')
-const multer = require('multer')
-const sharp = require('sharp')
-const path = require('path')
-const {
-  
-  uploader,
-} = require('../middlewares/cloudinaryConfig')
-
-
-const DatauriParser = require('datauri/parser')
+const { Posts } = require("../models/posts")
+const _ = require("lodash")
+const multer = require("multer")
+const sharp = require("sharp")
+const path = require("path")
+const { uploader } = require("../middlewares/cloudinaryConfig")
+const DatauriParser = require("datauri/parser")
 //middleware
-const auth = require('../middlewares/auth')
+const auth = require("../middlewares/auth")
 
 // avoir la liste de tous les événements:
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   // supprimer un évènement apres 6 mois de sa date de fin (90jours)
   await Posts.deleteMany({
     dateFin: { $lte: Date.now() - 1000 * 60 * 60 * 24 * 180 },
@@ -36,7 +31,7 @@ router.get('/', async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(startIndex)
       .limit(limit)
-      .populate('owner', '-password -__v')
+      .populate("owner", "-password -__v")
     // avoir le status de l'évènement (en cours ,terminé ou bientot)
     // await posts.getStatus()
     return res.status(200).send(posts)
@@ -46,8 +41,8 @@ router.get('/', async (req, res) => {
   if (req.query.searchEvent) {
     const post = await Posts.find({ $text: { $search: req.query.searchEvent } })
       .sort({ createdAt: -1 })
-      .populate('owner', '-password -__v')
-    if (!post) return res.status(404).send('aucun evenement trouver')
+      .populate("owner", "-password -__v")
+    if (!post) return res.status(404).send("aucun evenement trouver")
     return res.status(200).send(post)
   }
 
@@ -56,15 +51,15 @@ router.get('/', async (req, res) => {
     .sort({ createdAt: -1 })
     .skip(startIndex)
     .limit(limit)
-    .populate('owner', '-password -__v')
+    .populate("owner", "-password -__v")
   res.status(200).send(posts)
 })
 
 // voir tous ses évènement (qu'on a nous méme creer)
-router.get('/me/myevents', auth, async (req, res) => {
+router.get("/me/myevents", auth, async (req, res) => {
   try {
     let post = await Posts.find({ owner: req.user._id })
-    if (!post) return res.status(404).send('aucun évènement trouvé')
+    if (!post) return res.status(404).send("aucun évènement trouvé")
     res.status(200).send(post)
   } catch (e) {
     console.log(e)
@@ -72,7 +67,7 @@ router.get('/me/myevents', auth, async (req, res) => {
 })
 
 // voir un seul  évènement  par son id:
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   const post = await Posts.findById(req.params.id)
   await post.getStatus()
   if (!post)
@@ -89,16 +84,16 @@ const upload = multer({
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
       return cb(
         new Error(
-          'le type de fichier doit étre une image de taille inférieure ou égale a 3MBs'
+          "le type de fichier doit étre une image de taille inférieure ou égale a 3MBs"
         )
       )
     }
     cb(undefined, true)
   },
-}).single('eventPic')
+}).single("eventPic")
 
 // ajouter un événement
-router.post('/', upload, async (req, res) => {
+router.post("/", upload, async (req, res) => {
   // auth, raja3ha
   const {
     titre,
@@ -136,13 +131,13 @@ router.post('/', upload, async (req, res) => {
       path.extname(req.file.originalname).toString(),
       buffer
     ).content
-    await uploader.upload(file.toString()).then(async ( result,error) => {
+    await uploader.upload(file.toString()).then(async (result, error) => {
       if (error) {
         console.log(error)
       }
       post.image = result.url
       await post.save()
-      return res.status(200).send('photo telecharger avec succeés')
+      return res.status(200).send("photo telecharger avec succeés")
     })
   } else {
     return res.status(200).send(post)
@@ -150,18 +145,18 @@ router.post('/', upload, async (req, res) => {
 })
 
 // supprimer l'image de l'evenement:
-router.delete('/:id/eventpicture', auth, async (req, res) => {
+router.delete("/:id/eventpicture", auth, async (req, res) => {
   let post = await Posts.findOne({ owner: req.user._id, _id: req.params.id })
   if (!post.image) {
-    res.status(404).send('aucune photo n a été  trouver pour ce événement')
+    res.status(404).send("aucune photo n a été  trouver pour ce événement")
   }
   post.image = undefined
   await post.save()
-  res.send('la photo a bien été supprimer')
+  res.send("la photo a bien été supprimer")
 })
 
 // modifier un événement
-router.put('/:id', auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   const _id = req.params.id
   // on s'assure que l'utilisateur ne peut pas modifer le _id et le owner dans la bdd
   if (!req.body.owner || !req.body._id) {
@@ -176,30 +171,30 @@ router.put('/:id', auth, async (req, res) => {
           new: true,
         }
       )
-      if (!post) return res.status(400).send('une erreur est servenu!')
+      if (!post) return res.status(400).send("une erreur est servenu!")
       await post.save()
       res
         .status(200)
         .send(
           _.pick(post, [
-            'titre',
-            'categorie',
-            'dateDebut',
-            'dateFin',
-            'region',
-            'description',
+            "titre",
+            "categorie",
+            "dateDebut",
+            "dateFin",
+            "region",
+            "description",
           ])
         )
     } catch (e) {
-      res.status(404).send('error')
+      res.status(404).send("error")
     }
   } else {
-    res.status(403).send('vous pouvez pas modifier cet élément')
+    res.status(403).send("vous pouvez pas modifier cet élément")
   }
 })
 
 // supprimer un évenement
-router.delete('/:id', auth, async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   const _id = req.params.id
   try {
     const post = await Posts.findOneAndDelete({ _id, owner: req.user._id })
