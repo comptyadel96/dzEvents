@@ -7,11 +7,8 @@ const FirstTime = require("../models/firstTime")
 const { User } = require("../models/user")
 const auth = require("../middlewares/auth")
 const DatauriParser = require("datauri/parser")
-const {
-  cloudinaryConfig,
-  uploader,
-} = require("../middlewares/cloudinaryConfig")
-router.use("*", cloudinaryConfig)
+const { uploader } = require("../middlewares/cloudinaryConfig")
+
 // voir tous les events de la premiere fois :
 router.get("/", async (req, res) => {
   const page = parseInt(req.query.page)
@@ -63,37 +60,37 @@ router.post("/", upload, async (req, res) => {
   // const user = await User.findOne({ _id: req.user._id })
   // verifier si l'utilisateur n'a pas encore publier dans la section (1 iére fois)
   // if (!user.firstTimePublished) {
-    const first = await FirstTime.create({
-      titre: req.body.titre,
-      description: req.body.description,
-      adresse: req.body.adresse,
-      wilaya: req.body.wilaya,
-      // owner: req.user._id,
+  const first = await FirstTime.create({
+    titre: req.body.titre,
+    description: req.body.description,
+    adresse: req.body.adresse,
+    wilaya: req.body.wilaya,
+    // owner: req.user._id,
+  })
+  if (req.file) {
+    const buffer = await sharp(req.file.buffer)
+      .resize({ width: 350, height: 300 })
+      .png()
+      .toBuffer()
+    // convertir le buffer en string(base64)
+    const parser = new DatauriParser()
+    const file = parser.format(
+      path.extname(req.file.originalname).toString(),
+      buffer
+    ).content
+
+    await uploader.upload(file).then(async (result) => {
+      const imageUri = result.url
+      first.photo = imageUri
+      await first.save()
+      res.send("photo télécharger avec succés")
     })
-    if (req.file) {
-      const buffer = await sharp(req.file.buffer)
-        .resize({ width: 350, height: 300 })
-        .png()
-        .toBuffer()
-      // convertir le buffer en string(base64)
-      const parser = new DatauriParser()
-      const file = parser.format(
-        path.extname(req.file.originalname).toString(),
-        buffer
-      ).content
+  }
+  // appliquer la methode pour que l'utilisateur ne puisse pas poster plus qu'un article
+  // await user.hasPublished()
+  // await user.save()
 
-      await uploader.upload(file).then(async (result) => {
-        const imageUri = result.url
-        first.photo = imageUri
-        await first.save()
-        res.send("photo télécharger avec succés")
-      })
-    }
-    // appliquer la methode pour que l'utilisateur ne puisse pas poster plus qu'un article
-    // await user.hasPublished()
-    // await user.save()
-
-    res.status(200).send(first)
+  res.status(200).send(first)
   // } else {
   //   res
   //     .status(403)
