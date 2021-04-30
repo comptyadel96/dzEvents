@@ -61,11 +61,11 @@ const postSchema = new mongoose.Schema(
       ],
     },
     geometry: {
-      type:{
-        type:String,
-        default:'Point'
+      type: {
+        type: String,
+        default: "Point",
       },
-      coordinates:[]
+      coordinates: [],
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,

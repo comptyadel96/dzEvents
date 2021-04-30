@@ -120,6 +120,7 @@ router.post("/", upload, async (req, res) => {
     dateDebut,
     dateFin,
   })
+  console.log(post)
   if (req.file) {
     const buffer = await sharp(req.file.buffer)
       .resize({ height: 350, width: 350 })
