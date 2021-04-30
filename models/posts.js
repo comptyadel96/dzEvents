@@ -65,7 +65,7 @@ const postSchema = new mongoose.Schema(
         type: String,
         default: "Point",
       },
-      coordinates: [],
+      coordinates: [Number],
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
