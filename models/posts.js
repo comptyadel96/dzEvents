@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose")
 const postSchema = new mongoose.Schema(
   {
     titre: {
@@ -11,34 +11,34 @@ const postSchema = new mongoose.Schema(
     categorie: {
       type: String,
       enum: [
-        'Sportif',
-        'Commercial',
-        'Religieux',
-        'Etudiants',
-        'High-Tech',
-        'Musicale',
-        'Concours',
-        'Conférence',
-        'Trip-voyage et sorties',
-        'Culturelle',
-        'Recrutement proffessionel',
-        'Fétes',
-        'Loisir',
-        'Artistique',
-        'Autre',
+        "Sportif",
+        "Commercial",
+        "Religieux",
+        "Etudiants",
+        "High-Tech",
+        "Musicale",
+        "Concours",
+        "Conférence",
+        "Trip-voyage et sorties",
+        "Culturelle",
+        "Recrutement proffessionel",
+        "Fétes",
+        "Loisir",
+        "Artistique",
+        "Autre",
       ],
-      required: [true, 'vous devez specifier une catégorie'],
+      required: [true, "vous devez specifier une catégorie"],
     },
     region: {
       type: String,
       minlength: 2,
-      required: [true, 'vous devez spécifier la région pour cet évènement'],
+      required: [true, "vous devez spécifier la région pour cet évènement"],
     },
     adresse: {
       type: String,
       minlength: 10,
       maxlength: 1024,
-      required: [true, 'vous devez spécifier l adresse pour cet évènement'],
+      required: [true, "vous devez spécifier l adresse pour cet évènement"],
     },
     image: String,
     description: {
@@ -50,31 +50,33 @@ const postSchema = new mongoose.Schema(
       // required: [true, 'vous devez définir une date de début pour cet évenement '],
       min: [
         new Date(Date.now() + 1000 * 60 * 5),
-        'la date doit étre égal ou supérieure a la date actuel',
+        "la date doit étre égal ou supérieure a la date actuel",
       ],
     },
     dateFin: {
       type: Date,
       min: [
         new Date(Date.now() + 1000 * 60 * 60).toDateString(),
-        'la date de fin doit étre supérieure a la date du début',
+        "la date de fin doit étre supérieure a la date du début",
       ],
     },
-    geometry: {
-      type: {
-        type: String,
-        default: 'Point',
+    geometry: [
+      {
+        type: {
+          type: String,
+          default: "Point",
+        },
+        coordinates: [Number],
       },
-      coordinates: [Number],
-    },
+    ],
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       // required: true,
     },
     status: {
       type: String,
-      enum: ['en cours', 'terminé', 'à venir'],
+      enum: ["en cours", "terminé", "à venir"],
     },
   },
   { timestamps: true }
@@ -85,22 +87,21 @@ postSchema.methods.getStatus = function () {
     this.dateFin.toLocaleDateString() <
     new Date(Date.now()).toLocaleDateString()
   ) {
-    this.status = 'terminé'
+    this.status = "terminé"
   } else if (
     this.dateDebut.toLocaleDateString() <=
       new Date(Date.now()).toLocaleDateString() &&
     this.dateFin.toLocaleDateString() >=
       new Date(Date.now()).toLocaleDateString()
   ) {
-    this.status = 'en cours'
+    this.status = "en cours"
   } else {
-    this.status = 'à venir'
+    this.status = "à venir"
   }
-  
 }
 
-postSchema.index({ titre: 'text' })
+postSchema.index({ titre: "text" })
 
-const Posts = mongoose.model('Post', postSchema)
+const Posts = mongoose.model("Post", postSchema)
 
 module.exports = { Posts, postSchema }
