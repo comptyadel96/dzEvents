@@ -64,6 +64,7 @@ const postSchema = new mongoose.Schema(
       type: {
         type: String,
         default: "Point",
+        enum:["Point"]
       },
       coordinates: [Number],
     },
