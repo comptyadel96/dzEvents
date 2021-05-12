@@ -75,7 +75,7 @@ userSchema.pre('save', async function (next) {
 
 // methode pour creer un ticket jwt
 userSchema.methods.createTokenAuth = async function () {
-  const token = jwt.sign({ _id: this._id }, process.env.JWT_TOKEN_KEY, {
+  const token = jwt.sign({ _id: this._id,name:this.name,email:this.email }, process.env.JWT_TOKEN_KEY, {
     expiresIn: process.env.JWT_EXPIRE,
   })
   return token

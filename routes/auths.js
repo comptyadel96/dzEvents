@@ -10,7 +10,7 @@ const _ = require("lodash")
 
 router.post("/", async (req, res, next) => {
   // verifier si l'utilisateur a  déja un compte
-  let user = await User.findOne({ email: req.body.email })
+  let user = await User.findOne({ email: req.body.email})
   if (!user) return res.status(400).send("utilisateur introuvable")
   // verifier le mot de passe:
   const validPassword = await bcrypt.compare(req.body.password, user.password)
