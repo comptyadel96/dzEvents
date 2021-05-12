@@ -60,14 +60,13 @@ router.get("/me/stores", auth, async (req, res) => {
 
 const upload = multer({
   limits: {
-    fileSize: 2500000,
+    fileSize: 5000000,
   },
-  // storage: storage,
   fileFilter(req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/gi)) {
       return cb(
         new Error(
-          "le type de fichier doit étre une image de taille inférieure ou égale a 2.5MBs "
+          "le type de fichier doit étre une image de taille inférieure ou égale a 5MBs "
         )
       )
     }
@@ -76,14 +75,13 @@ const upload = multer({
 }).array("storePics", 5)
 
 // creer un nouvel article à vendre:
-router.post("/", upload, async (req, res) => {
-  //auth, raja3ha =>
+router.post("/", auth, upload, async (req, res) => {
   let article = await Store.create({
     article: req.body.article,
     prix: req.body.prix,
     wilaya: req.body.wilaya,
     description: req.body.description,
-    // owner: req.user._id,
+    owner: req.user._id,
   })
 
   if (req.files) {
@@ -147,7 +145,6 @@ router.patch("/:id/pictures", [auth, upload], async (req, res) => {
           if (article.photos.length < 5) {
             const photo = await Photos.create({ url: result.url })
             await article.photos.push(photo)
-
             return res.status(200).send("photos telecharger avec succes")
           } else {
             return res.send("pas plus de 5 photos svp")
@@ -186,10 +183,16 @@ router.delete("/:id", auth, async (req, res) => {
 })
 
 // supprimer l'image
-router.delete("/storepictures/:id/:photoId", async (req, res) => {
-  //auth et owner:req.user._id
-  const article = await Store.findOne({ _id: req.params.id })
-  if (!article) return res.status(404).send("aucun image trouver!,il se peut qu'elle soit déja été supprimer ")
+router.delete("/storepictures/:id/:photoId", auth, async (req, res) => {
+  //auth et
+  const article = await Store.findOne({
+    _id: req.params.id,
+    owner: req.user._id,
+  })
+  if (!article)
+    return res
+      .status(404)
+      .send("aucun image trouver!,il se peut qu'elle soit déja été supprimer ")
   await Photos.findByIdAndDelete(req.params.photoId)
   // avoir le _id de la photo
   let tof = article.photos.find((p) => p == req.params.photoId)

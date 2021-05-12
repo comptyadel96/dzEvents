@@ -12,7 +12,7 @@ const auth = require("../middlewares/auth")
 
 // avoir la liste de tous les événements:
 router.get("/", async (req, res) => {
-  // supprimer un évènement apres 6 mois de sa date de fin (90jours)
+  // supprimer un évènement apres 6 mois de sa date de fin (180jours)
   await Posts.deleteMany({
     dateFin: { $lte: Date.now() - 1000 * 60 * 60 * 24 * 180 },
   })
@@ -32,8 +32,7 @@ router.get("/", async (req, res) => {
       .skip(startIndex)
       .limit(limit)
       .populate("owner", "-password -__v")
-    // avoir le status de l'évènement (en cours ,terminé ou bientot)
-    // await posts.getStatus()
+    
     return res.status(200).send(posts)
   }
 
@@ -77,14 +76,14 @@ router.get("/:id", async (req, res) => {
 
 const upload = multer({
   limits: {
-    fileSize: 3000000,
+    fileSize: 5000000,
   },
 
   fileFilter(req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
       return cb(
         new Error(
-          "le type de fichier doit étre une image de taille inférieure ou égale a 3MBs"
+          "le type de fichier doit étre une image de taille inférieure ou égale a 5MBs"
         )
       )
     }
@@ -93,8 +92,8 @@ const upload = multer({
 }).single("eventPic")
 
 // ajouter un événement
-router.post("/", upload, async (req, res) => {
-  // auth, raja3ha
+router.post("/",auth, upload, async (req, res) => {
+
   const {
     titre,
     categorie,
@@ -111,7 +110,7 @@ router.post("/", upload, async (req, res) => {
     titre,
     categorie,
     geometry,
-    // owner: req.user._id,
+    owner: req.user._id,
     region,
     adresse,
     organisateur,

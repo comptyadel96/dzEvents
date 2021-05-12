@@ -41,7 +41,7 @@ router.get("/me/firstevent", auth, async (req, res) => {
 // configurer la photo pour le firsttime
 const upload = multer({
   limits: {
-    fileSize: 1500000,
+    fileSize: 5000000,
   },
   fileFilter(req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/gi)) {
@@ -56,49 +56,48 @@ const upload = multer({
 }).single("firstTimePic")
 
 // ajouter un first event
-router.post("/", upload, async (req, res) => {
-  //auth
-  // const user = await User.findOne({ _id: req.user._id })
+router.post("/", auth, upload, async (req, res) => {
+  const user = await User.findOne({ _id: req.user._id })
   // verifier si l'utilisateur n'a pas encore publier dans la section (1 iére fois)
-  // if (!user.firstTimePublished) {
-  const first = await FirstTime.create({
-    titre: req.body.titre,
-    description: req.body.description,
-    adresse: req.body.adresse,
-    wilaya: req.body.wilaya,
-    // owner: req.user._id,
-  })
-  if (req.file) {
-    const buffer = await sharp(req.file.buffer)
-      .resize({ width: 350, height: 300 })
-      .png()
-      .toBuffer()
-    // convertir le buffer en string(base64)
-    const parser = new DatauriParser()
-    const file = parser.format(
-      path.extname(req.file.originalname).toString(),
-      buffer
-    ).content
-
-    await uploader.upload(file).then(async (result) => {
-      const imageUri = result.url
-      first.photo = imageUri
-      await first.save()
-      res.send("photo télécharger avec succés")
+  if (!user.firstTimePublished) {
+    const first = await FirstTime.create({
+      titre: req.body.titre,
+      description: req.body.description,
+      adresse: req.body.adresse,
+      wilaya: req.body.wilaya,
+      // owner: req.user._id,
     })
-  }
-  // appliquer la methode pour que l'utilisateur ne puisse pas poster plus qu'un article
-  // await user.hasPublished()
-  // await user.save()
+    if (req.file) {
+      const buffer = await sharp(req.file.buffer)
+        .resize({ width: 350, height: 300 })
+        .png()
+        .toBuffer()
+      // convertir le buffer en string(base64)
+      const parser = new DatauriParser()
+      const file = parser.format(
+        path.extname(req.file.originalname).toString(),
+        buffer
+      ).content
 
-  res.status(200).send(first)
-  // } else {
-  //   res
-  //     .status(403)
-  //     .send(
-  //       "vous avez le droit a une seule publication dans la section premiére fois"
-  //     )
-  // }
+      await uploader.upload(file).then(async (result) => {
+        const imageUri = result.url
+        first.photo = imageUri
+        await first.save()
+        res.send("photo télécharger avec succés")
+      })
+    }
+
+    // appliquer la methode pour que l'utilisateur ne puisse pas poster plus qu'un article
+    await user.hasPublished()
+    await user.save()
+    res.status(200).send(first)
+  } else {
+    res
+      .status(403)
+      .send(
+        "vous avez le droit a une seule publication dans la section premiére fois"
+      )
+  }
 })
 
 // modifier first event
@@ -130,21 +129,8 @@ router.delete("/:id", auth, async (req, res) => {
   res.status(200).send("event supprimer avec succées !")
 })
 
-//servir la photo au client
-router.get("/:id/picture", async (req, res) => {
-  try {
-    const first = await FirstTime.findById(req.params.id)
-    if (!first || !first.photo) {
-      throw new Error()
-    }
-    res.set("Content-Type", "image/png")
-    res.send(first.photo)
-  } catch (e) {
-    res.status(404)
-  }
-})
 // supprimer la photo du firstTime
-router.delete("/:id/picture", async (req, res) => {
+router.delete("/:id/picture",auth, async (req, res) => {
   const first = await FirstTime.findOne({
     _id: req.params.id,
     owner: req.user._id,
