@@ -1,26 +1,29 @@
-const express = require('express')
+const express = require("express")
 const router = express.Router()
-const path = require('path')
-const _ = require('lodash')
-const { User, validateSchema } = require('../models/user.js')
-const Joi = require('joi')
-const passwordComplexity = require('joi-password-complexity').default
-const auth = require('../middlewares/auth')
-const bcrypt = require('bcrypt')
-const multer = require('multer')
+const path = require("path")
+const _ = require("lodash")
+const { User, validateSchema } = require("../models/user.js")
+const Joi = require("joi")
+const passwordComplexity = require("joi-password-complexity").default
+const auth = require("../middlewares/auth")
+const bcrypt = require("bcrypt")
+const multer = require("multer")
 // const sharp = require('sharp')
-const { cloudinaryConfig, uploader } = require('../middlewares/cloudinaryConfig')
-router.use('*', cloudinaryConfig)
-const DatauriParser = require('datauri/parser')
+const {
+  cloudinaryConfig,
+  uploader,
+} = require("../middlewares/cloudinaryConfig")
+router.use("*", cloudinaryConfig)
+const DatauriParser = require("datauri/parser")
 
 // voir les infos de l'utilisateur déja connecter (ses propres infos de compte)
-router.get('/me', auth, async (req, res) => {
-  const user = await User.findOne({ _id: req.user._id }).select('-password')
+router.get("/me", auth, async (req, res) => {
+  const user = await User.findOne({ _id: req.user._id }).select("-password")
   res.send(user)
 })
 
 // mettre a jour les coordonnées de l'utilisateur (juste le nom ou l'email)
-router.put('/updatedetails', auth, async (req, res) => {
+router.put("/updatedetails", auth, async (req, res) => {
   fieldsToUpdate = {
     name: req.body.name,
     email: req.body.email,
@@ -29,19 +32,25 @@ router.put('/updatedetails', auth, async (req, res) => {
     runValidators: true,
     new: true,
   })
-  if (!user) return res.status(500).send('une erreur s"est produite veuillez réessayer dans un moment')
+  if (!user)
+    return res
+      .status(500)
+      .send('une erreur s"est produite veuillez réessayer dans un moment')
   res.status(200).json({
-    message: 'Bravo vous avez mis à jour vos informations  !',
+    message: "Bravo vous avez mis à jour vos informations  !",
     data: user,
   })
 })
 
 // mettre à jour le mot de passe de l'utilisateur
-router.put('/updatepassword', auth, async (req, res) => {
+router.put("/updatepassword", auth, async (req, res) => {
   const user = await User.findById(req.user._id)
   // il entre son mot de passe actuel et on le verifie
-  const validatePassword = await bcrypt.compare(req.body.password, user.password)
-  if (!validatePassword) return res.status(400).send('mot de passe invalide!')
+  const validatePassword = await bcrypt.compare(
+    req.body.password,
+    user.password
+  )
+  if (!validatePassword) return res.status(400).send("mot de passe invalide!")
 
   const { error } = validateSchema2(req.body)
   if (error) return res.status(400).send(error.details[0].message)
@@ -49,16 +58,26 @@ router.put('/updatepassword', auth, async (req, res) => {
   user.password = req.body.newPassword
   await user.save()
   const token = await user.createTokenAuth()
-  res.header('x-auth-token', token).send(_.pick(user, ['name', 'email', '_id', 'phoneNumber', 'firstTimePublished']))
+  res
+    .header("x-auth-token", token)
+    .send(
+      _.pick(user, [
+        "name",
+        "email",
+        "_id",
+        "phoneNumber",
+        "firstTimePublished",
+      ])
+    )
 })
 
 // configurer la photo de profil :
 const storage = multer.diskStorage({
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname)
+    cb(null, Date.now() + "-" + file.originalname)
   },
   destination: (req, file, cb) => {
-    cb(null, './public/profilePictures')
+    cb(null, "./public/profilePictures")
   },
 })
 const upload = multer({
@@ -68,54 +87,79 @@ const upload = multer({
   storage: storage,
   fileFilter(req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/gi)) {
-      return cb(new Error('le fichier doit étre au format image de taille inférieure ou égale a 5MBs'))
+      return cb(
+        new Error(
+          "le fichier doit étre au format image de taille inférieure ou égale a 5MBs"
+        )
+      )
     }
     cb(undefined, true)
   },
-}).single('profilePic')
+}).single("profilePic")
 
 // ajouter un nouvelle utilisateur
-router.post('/', upload, async (req, res) => {
+router.post("/", upload, async (req, res) => {
   // const { error } = await validateSchema(req.body)
   // if (error) return res.status(400).send(error.details[0].message)
 
   // verifier si l'utilisateur n'a pas déja un compte
   let user = await User.findOne({ email: req.body.email })
-  if (user) return res.status(400).send('cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier')
+  if (user)
+    return res
+      .status(400)
+      .send(
+        "cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier"
+      )
 
-  user = new User(_.pick(req.body, ['name', 'email', 'password', 'confirmPassword', 'phoneNumber']))
+  user = new User(
+    _.pick(req.body, ["name", "email", "password", "phoneNumber"])
+  )
   await user.save()
   // si l'utilisateur veut telecharger une photo de profile
   if (req.file) {
     console.log(req.file)
-    user.profilePicture = req.file.path.replace('public', 'http://192.168.1.38:3900/')
+    user.profilePicture = req.file.path.replace(
+      "public",
+      "http://192.168.1.38:3900/"
+    )
     await user.save()
-    return res.status(200).send('photo telecharger avec succées')
+    return res.status(200).send("photo telecharger avec succées")
   }
   // on donne un ticket pour le nouvelle utilisateur et on crée un header personalisé(x-auth-token)
   const token = await user.createTokenAuth()
-  return res.header('x-auth-token', token).send(_.pick(user, ['_id', 'name', 'email', 'phoneNumber', ' firstTimePublished', 'profilePicture']))
+  return res
+    .header("x-auth-token", token)
+    .send(
+      _.pick(user, [
+        "_id",
+        "name",
+        "email",
+        "phoneNumber",
+        " firstTimePublished",
+        "profilePicture",
+      ])
+    )
 })
 
 // supprimer l'image d'utilisateur
-router.delete('/me/profilpicture', auth, async (req, res) => {
+router.delete("/me/profilpicture", auth, async (req, res) => {
   let user = await User.findOne({ _id: req.user._id })
   if (!user.profilePicture) {
-    res.status(404).send('aucune photo n a été  trouver pour ce profil')
+    res.status(404).send("aucune photo n a été  trouver pour ce profil")
   }
   user.profilePicture = undefined
   await user.save()
-  res.send('la photo a bien été supprimer')
+  res.send("la photo a bien été supprimer")
 })
 
 // servir l'image au client  :
-router.get('/:id/profilpicture', async (req, res) => {
+router.get("/:id/profilpicture", async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
     if (!user || !user.profilePicture) {
       throw new Error()
     }
-    res.set('Content-Type', 'image/png')
+    res.set("Content-Type", "image/png")
     res.send(user.profilePicture)
   } catch (e) {
     res.status(404)
