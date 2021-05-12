@@ -49,7 +49,7 @@ router.get("/:id", async (req, res) => {
   res.status(200).send(article)
 })
 // trouver les articles qu'on a nous meme publier
-router.get("/publications/me", auth, async (req, res) => {
+router.get("/me/stores", auth, async (req, res) => {
   const article = await Store.find({ owner: req.user._id })
   if (!article)
     return res

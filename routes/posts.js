@@ -56,7 +56,7 @@ router.get("/", async (req, res) => {
 })
 
 // voir tous ses évènement (qu'on a nous méme creer)
-router.get("/me/myevents", auth, async (req, res) => {
+router.get("/me/events", auth, async (req, res) => {
   try {
     let post = await Posts.find({ owner: req.user._id })
     if (!post) return res.status(404).send("aucun évènement trouvé")

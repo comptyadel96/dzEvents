@@ -8,12 +8,8 @@ const passwordComplexity = require("joi-password-complexity").default
 const auth = require("../middlewares/auth")
 const bcrypt = require("bcrypt")
 const multer = require("multer")
-// const sharp = require('sharp')
-const {
-  cloudinaryConfig,
-  uploader,
-} = require("../middlewares/cloudinaryConfig")
-router.use("*", cloudinaryConfig)
+const sharp = require("sharp")
+
 const DatauriParser = require("datauri/parser")
 
 // voir les infos de l'utilisateur déja connecter (ses propres infos de compte)
@@ -27,6 +23,7 @@ router.put("/updatedetails", auth, async (req, res) => {
   fieldsToUpdate = {
     name: req.body.name,
     email: req.body.email,
+    phoneNumber: req.body.phoneNumber,
   }
   const user = await User.findByIdAndUpdate(req.user._id, fieldsToUpdate, {
     runValidators: true,
@@ -76,9 +73,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname)
   },
-  destination: (req, file, cb) => {
-    cb(null, "./public/profilePictures")
-  },
+ 
 })
 const upload = multer({
   limits: {

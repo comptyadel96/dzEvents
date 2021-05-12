@@ -31,6 +31,7 @@ router.get("/:id", async (req, res) => {
     res.status(404).send("aucun évènement trouver désolé ")
   }
 })
+
 // voir son propre first event
 router.get("/me/firstevent", auth, async (req, res) => {
   const first = await FirstTime.findOne({ owner: req.user._id })
