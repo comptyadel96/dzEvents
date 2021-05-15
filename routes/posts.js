@@ -70,7 +70,10 @@ router.get("/me/events", auth, async (req, res) => {
 
 // voir un seul  évènement  par son id:
 router.get("/:id", async (req, res) => {
-  const post = await Posts.findById(req.params.id)
+  const post = await Posts.findById(req.params.id).populate(
+    "owner",
+    "-password -__v"
+  )
   await post.getStatus()
   if (!post)
     return res.status(404).send('cet évènement n"a pas été trouvé désoler')

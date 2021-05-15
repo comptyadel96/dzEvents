@@ -108,7 +108,7 @@ router.put("/:id", auth, async (req, res) => {
       { _id, owner: req.user._id },
       { ...req.body },
       { runValidators: true, new: true }
-    )
+    ).populate("owner", "-password -__v")
     if (!first)
       return res.status(404).send(" oops ! cet élèment est introuvable :( ")
     await first.save()
@@ -130,7 +130,7 @@ router.delete("/:id", auth, async (req, res) => {
 })
 
 // supprimer la photo du firstTime
-router.delete("/:id/picture",auth, async (req, res) => {
+router.delete("/:id/picture", auth, async (req, res) => {
   const first = await FirstTime.findOne({
     _id: req.params.id,
     owner: req.user._id,
