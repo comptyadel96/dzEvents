@@ -9,8 +9,8 @@ const auth = require("../middlewares/auth")
 const bcrypt = require("bcrypt")
 const multer = require("multer")
 const sharp = require("sharp")
-
 const DatauriParser = require("datauri/parser")
+const { uploader } = require("../middlewares/cloudinaryConfig")
 
 // voir les infos de l'utilisateur déja connecter (ses propres infos de compte)
 router.get("/me", auth, async (req, res) => {
