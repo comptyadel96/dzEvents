@@ -18,7 +18,7 @@ router.get("/", async (req, res) => {
     .skip(startIndex)
     .limit(limit)
     .sort({ createdAt: -1 })
-    .populate("owner", "-password -profilePicture")
+    .populate("owner", "-password ")
   res.status(200).send(first)
 })
 
@@ -65,7 +65,7 @@ router.post("/", auth, upload, async (req, res) => {
       description: req.body.description,
       adresse: req.body.adresse,
       wilaya: req.body.wilaya,
-      // owner: req.user._id,
+      owner: req.user._id,
     })
     if (req.file) {
       const buffer = await sharp(req.file.buffer)
