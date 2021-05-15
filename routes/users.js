@@ -119,7 +119,8 @@ router.post("/", upload, async (req, res) => {
       }
       user.profilePicture = result.url
       await user.save()
-      return res.status(200).send("photo telecharger avec succeés")
+      const token = await user.createTokenAuth()
+      return res.status(200).header("x-auth-token",token).send("photo telecharger avec succeés")
     })
   } else {
     return res.status(200).send(post)
