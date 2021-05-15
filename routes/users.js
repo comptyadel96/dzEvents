@@ -2,7 +2,7 @@ const express = require("express")
 const router = express.Router()
 const path = require("path")
 const _ = require("lodash")
-const { User, validateSchema } = require("../models/user.js")
+const { User } = require("../models/user.js")
 const Joi = require("joi")
 const passwordComplexity = require("joi-password-complexity").default
 const auth = require("../middlewares/auth")
@@ -69,17 +69,11 @@ router.put("/updatepassword", auth, async (req, res) => {
 })
 
 // configurer la photo de profil :
-const storage = multer.diskStorage({
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname)
-  },
- 
-})
 const upload = multer({
   limits: {
     fileSize: 5000000,
   },
-  storage: storage,
+
   fileFilter(req, file, cb) {
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/gi)) {
       return cb(
@@ -94,14 +88,11 @@ const upload = multer({
 
 // ajouter un nouvelle utilisateur
 router.post("/", upload, async (req, res) => {
-  // const { error } = await validateSchema(req.body)
-  // if (error) return res.status(400).send(error.details[0].message)
-
   // verifier si l'utilisateur n'a pas déja un compte
   let user = await User.findOne({ email: req.body.email })
   if (user)
     return res
-      .status(400)
+      .status(401)
       .send(
         "cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier"
       )
@@ -112,13 +103,26 @@ router.post("/", upload, async (req, res) => {
   await user.save()
   // si l'utilisateur veut telecharger une photo de profile
   if (req.file) {
-    console.log(req.file)
-    user.profilePicture = req.file.path.replace(
-      "public",
-      "http://192.168.1.38:3900/"
-    )
-    await user.save()
-    return res.status(200).send("photo telecharger avec succées")
+    const buffer = await sharp(req.file.buffer)
+      .resize({ height: 350, width: 350 })
+      .png()
+      .toBuffer()
+    // convertir le buffer en lien
+    const parser = new DatauriParser()
+    const file = parser.format(
+      path.extname(req.file.originalname).toString(),
+      buffer
+    ).content
+    await uploader.upload(file.toString()).then(async (result, error) => {
+      if (error) {
+        console.log(error)
+      }
+      user.profilePicture = result.url
+      await user.save()
+      return res.status(200).send("photo telecharger avec succeés")
+    })
+  } else {
+    return res.status(200).send(post)
   }
   // on donne un ticket pour le nouvelle utilisateur et on crée un header personalisé(x-auth-token)
   const token = await user.createTokenAuth()
@@ -147,19 +151,6 @@ router.delete("/me/profilpicture", auth, async (req, res) => {
   res.send("la photo a bien été supprimer")
 })
 
-// servir l'image au client  :
-router.get("/:id/profilpicture", async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id)
-    if (!user || !user.profilePicture) {
-      throw new Error()
-    }
-    res.set("Content-Type", "image/png")
-    res.send(user.profilePicture)
-  } catch (e) {
-    res.status(404)
-  }
-})
 
 const complexityOptions = {
   min: 8,
