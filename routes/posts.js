@@ -32,7 +32,7 @@ router.get("/", async (req, res) => {
       .skip(startIndex)
       .limit(limit)
       .populate("owner", "-password -__v")
-    
+
     return res.status(200).send(posts)
   }
 
@@ -57,7 +57,10 @@ router.get("/", async (req, res) => {
 // voir tous ses évènement (qu'on a nous méme creer)
 router.get("/me/events", auth, async (req, res) => {
   try {
-    let post = await Posts.find({ owner: req.user._id })
+    let post = await Posts.find({ owner: req.user._id }).populate(
+      "owner",
+      "-password -__v"
+    )
     if (!post) return res.status(404).send("aucun évènement trouvé")
     res.status(200).send(post)
   } catch (e) {
@@ -92,8 +95,7 @@ const upload = multer({
 }).single("eventPic")
 
 // ajouter un événement
-router.post("/",auth, upload, async (req, res) => {
-
+router.post("/", auth, upload, async (req, res) => {
   const {
     titre,
     categorie,
@@ -103,7 +105,6 @@ router.post("/",auth, upload, async (req, res) => {
     description,
     heureDebut,
     adresse,
-    organisateur,
     geometry,
   } = req.body
   let post = await Posts.create({
@@ -113,7 +114,6 @@ router.post("/",auth, upload, async (req, res) => {
     owner: req.user._id,
     region,
     adresse,
-    organisateur,
     description,
     heureDebut,
     dateDebut,
