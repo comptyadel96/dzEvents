@@ -101,8 +101,6 @@ router.post("/", upload, async (req, res) => {
     _.pick(req.body, ["name", "email", "password", "phoneNumber"])
   )
   await user.save()
-  const token = await user.createTokenAuth()
-   res.status(200).header("x-auth-token",token).send("photo telecharger avec succeés")
   // si l'utilisateur veut telecharger une photo de profile
   if (req.file) {
     const buffer = await sharp(req.file.buffer)
