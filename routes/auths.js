@@ -10,7 +10,7 @@ const _ = require("lodash")
 
 router.post("/", async (req, res, next) => {
   // verifier si l'utilisateur a  déja un compte
-  let user = await User.findOne({ email: req.body.email})
+  let user = await User.findOne({ email: req.body.email })
   if (!user) return res.status(400).send("utilisateur introuvable")
   // verifier le mot de passe:
   const validPassword = await bcrypt.compare(req.body.password, user.password)
@@ -18,7 +18,9 @@ router.post("/", async (req, res, next) => {
     return res.status(400).send("email ou mot de passe incorrecte")
 
   const token = await user.createTokenAuth()
-  res.header("x-auth-token", token).send(_.pick(user, ["_id", "name", "email,profilePicture"]))
+  res
+    .header("x-auth-token", token)
+    .send(_.pick(user, ["_id", "name", "email,profilePicture"]))
 })
 
 // recuperer le mot de passe en cas d'oublie (avoir le ticket de récupération (resetToken))
@@ -73,7 +75,9 @@ router.put("/resetpassword/:resettoken", async (req, res) => {
 
   await user.save()
   const token = await user.createTokenAuth()
-  res.header("x-auth-token", token).send(_.pick(user, ["_id", "name", "email"]))
+  res
+    .header("x-auth-token", token)
+    .send(_.pick(user, ["_id", "name", "email", "profilePicture"]))
 })
 
 const complexityOptions = {

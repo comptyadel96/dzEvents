@@ -18,7 +18,7 @@ router.get("/me", auth, async (req, res) => {
   res.send(user)
 })
 
-// mettre a jour les coordonnées de l'utilisateur (juste le nom ou l'email)
+// mettre a jour les coordonnées de l'utilisateur (juste le nom , l'email et le num de téléphone)
 router.put("/updatedetails", auth, async (req, res) => {
   fieldsToUpdate = {
     name: req.body.name,
@@ -47,7 +47,7 @@ router.put("/updatepassword", auth, async (req, res) => {
     req.body.password,
     user.password
   )
-  if (!validatePassword) return res.status(400).send("mot de passe invalide!")
+  if (!validatePassword) return res.status(401).send("mot de passe invalide!")
 
   const { error } = validateSchema2(req.body)
   if (error) return res.status(400).send(error.details[0].message)
@@ -119,7 +119,6 @@ router.post("/", upload, async (req, res) => {
       }
       user.profilePicture = result.url
       await user.save()
-     
     })
   } else {
     return res.status(200).send(post)
@@ -134,7 +133,7 @@ router.post("/", upload, async (req, res) => {
         "name",
         "email",
         "phoneNumber",
-        " firstTimePublished",
+        "firstTimePublished",
         "profilePicture",
       ])
     )
@@ -150,7 +149,6 @@ router.delete("/me/profilpicture", auth, async (req, res) => {
   await user.save()
   res.send("la photo a bien été supprimer")
 })
-
 
 const complexityOptions = {
   min: 8,
@@ -171,32 +169,24 @@ const validateSchema2 = (password) => {
 
   return schema.validate(password)
 }
+// ajouter une photo de profile si l'utilisateur n'a pas ajouter la photo au moment de la création de son compte 
+router.put("/me/profilpicture", auth, upload, async (req, res) => {
+  let user = await User.findOne({ _id: req.user._id })
+  const buffer = await sharp(req.file.buffer)
+    .png()
+    .resize({ width: 200, height: 250 })
+    .toBuffer()
+  const parser = new DatauriParser()
+  const file = parser.format(
+    path.extname(req.file.originalname).toString(),
+    buffer
+  ).content
+
+  await uploader.upload(file).then(async (result) => {
+    user.profilePicture = result.url
+    await user.save()
+    res.send("photo mis à jour avec succés")
+  })
+})
 
 module.exports = router
-
-// si vous decider d'utiliser sharp pour redimensionner les images et utiliser le service cloudinary pour telecharger les photos
-// dans le cloud on utilise ce code ci-dessous =>
-
-// ajouter une photo de profil
-// router.post(
-//   '/me/profilpicture',
-//   auth,
-//   upload,
-//   async (req, res) => {
-//     let user = await User.findOne({ _id: req.user._id })
-//     const buffer = await sharp(req.file.buffer).png().resize({ width: 200, height: 250 }).toBuffer()
-//     const parser = new DatauriParser()
-//     const file = parser.format(path.extname(req.file.originalname).toString(), buffer).content
-//     if (req.file) {
-//       await uploader.upload(file).then(async (result) => {
-//         user.profilePicture = result.url
-//         await user.save()
-//         res.send('photo télécharger avec succés')
-//       })
-//     }
-//   },
-//   (error, req, res, next) => {
-//     res.status(400).send({ erreur: error.message })
-//     // une 3 iéme fonction qui sert de middleware pour generer le msg d'erreur
-//   }
-// )
