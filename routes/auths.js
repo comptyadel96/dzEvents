@@ -20,7 +20,7 @@ router.post("/", async (req, res, next) => {
   const token = await user.createTokenAuth()
   res
     .header("x-auth-token", token)
-    .send(_.pick(user, ["_id", "name", "email,profilePicture"]))
+    .send(_.pick(user, ["_id", "name", "email", "profilePicture"]))
 })
 
 // recuperer le mot de passe en cas d'oublie (avoir le ticket de récupération (resetToken))

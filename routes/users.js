@@ -169,7 +169,7 @@ const validateSchema2 = (password) => {
 
   return schema.validate(password)
 }
-// ajouter une photo de profile si l'utilisateur n'a pas ajouter la photo au moment de la création de son compte 
+// ajouter une photo de profile si l'utilisateur n'a pas ajouter la photo au moment de la création de son compte
 router.put("/me/profilpicture", auth, upload, async (req, res) => {
   let user = await User.findOne({ _id: req.user._id })
   const buffer = await sharp(req.file.buffer)
