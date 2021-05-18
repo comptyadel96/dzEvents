@@ -1,29 +1,29 @@
-const mongoose = require('mongoose')
-const Joi = require('joi')
-const passwordComplexity = require('joi-password-complexity').default
-const validator = require('validator')
-const jwt = require('jsonwebtoken')
-const crypto = require('crypto')
-const bcrypt = require('bcrypt')
+const mongoose = require("mongoose")
+const Joi = require("joi")
+const passwordComplexity = require("joi-password-complexity").default
+const validator = require("validator")
+const jwt = require("jsonwebtoken")
+const crypto = require("crypto")
+const bcrypt = require("bcrypt")
 
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
     minLength: 4,
     maxLength: 50,
-    required: [true, 'veuillez entrer un nom svp!!'],
+    required: [true, "veuillez entrer un nom svp!!"],
     trim: true,
   },
   email: {
     type: String,
     validate(val) {
       if (!validator.isEmail(val)) {
-        throw new Error('email invalide ...réessayez')
+        throw new Error("email invalide ...réessayez")
       }
     },
     required: true,
     minLength: 10,
-    maxlength:100,
+    maxlength: 100,
     unique: true,
     trim: true,
   },
@@ -38,13 +38,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [
       true,
-      'veuillez entrer votre numéro de téléphone professionnel s il vous plait ',
+      "veuillez entrer votre numéro de téléphone professionnel s il vous plait ",
     ],
     maxLength: 50,
     minLength: 10,
     unique: [
       true,
-      'le numéro de téléphone doit étre unique pour chaque utilisateur',
+      "le numéro de téléphone doit étre unique pour chaque utilisateur",
     ],
   },
   profilePicture: {
@@ -63,10 +63,10 @@ const userSchema = new mongoose.Schema({
 })
 
 // hasher le mot de passe avant de l'enregistrer :
-userSchema.pre('save', async function (next) {
+userSchema.pre("save", async function (next) {
   // si le mot de passe n'a pas été modifier (mot de passe oublié ou  bien mot de passe changer par l'utilisateur)
   // alors on saute l'étape de hashage avec next () pour ne pas le hasher une 2iéme fois
-  if (!this.isModified('password')) {
+  if (!this.isModified("password")) {
     return next()
   }
   const salt = await bcrypt.genSalt(10)
@@ -75,22 +75,31 @@ userSchema.pre('save', async function (next) {
 
 // methode pour creer un ticket jwt
 userSchema.methods.createTokenAuth = async function () {
-  const token = jwt.sign({ _id: this._id,name:this.name,email:this.email }, process.env.JWT_TOKEN_KEY, {
-    expiresIn: process.env.JWT_EXPIRE,
-  })
+  const token = jwt.sign(
+    {
+      _id: this._id,
+      name: this.name,
+      email: this.email,
+      profilePicture: this.profilePicture,
+    },
+    process.env.JWT_TOKEN_KEY,
+    {
+      expiresIn: process.env.JWT_EXPIRE,
+    }
+  )
   return token
 }
 
 // methode pour generer un ticket en cas ou on oublie le mot de passe :
 userSchema.methods.getResetPasswordToken = function () {
   // generer le ticket (l'utilisateur recevra ce ticket dans sa boite mail)
-  const resetToken = crypto.randomBytes(32).toString('hex')
+  const resetToken = crypto.randomBytes(32).toString("hex")
 
   // hasher le ticket(on le hash avant de le stocker dans la bdd)
   this.resetPasswordToken = crypto
-    .createHash('sha256')
+    .createHash("sha256")
     .update(resetToken)
-    .digest('hex')
+    .digest("hex")
 
   // definir la date d'expiration de ce ticket
   this.resetPasswordExpire = Date.now() + 120 * 60 * 1000 // 2 heures (1000 milisecondes * 60 = 1 minute * 120 =2 heures)
@@ -102,7 +111,7 @@ userSchema.methods.hasPublished = function () {
 }
 
 // model:
-const User = mongoose.model('User', userSchema)
+const User = mongoose.model("User", userSchema)
 
 // validation schema with Joi
 const validateSchema = (user) => {
@@ -119,7 +128,7 @@ const validateSchema = (user) => {
     name: Joi.string().min(5).max(50).required(),
     email: Joi.string().min(5).max(255).email().required(),
     password: passwordComplexity(complexityOptions).required(),
-    confirmPassword: Joi.string().valid(Joi.ref('password')).required(), 
+    confirmPassword: Joi.string().valid(Joi.ref("password")).required(),
     phoneNumber: Joi.string().min(10).max(10).required(),
   })
 

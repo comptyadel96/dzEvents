@@ -18,7 +18,7 @@ router.post("/", async (req, res, next) => {
     return res.status(400).send("email ou mot de passe incorrecte")
 
   const token = await user.createTokenAuth()
-  res.header("x-auth-token", token).send(user)
+  res.header("x-auth-token", token).send(_.pick(user, ["_id", "name", "email", "profilePicture"]))
 })
 
 // recuperer le mot de passe en cas d'oublie (avoir le ticket de récupération (resetToken))
