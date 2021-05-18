@@ -18,9 +18,7 @@ router.post("/", async (req, res, next) => {
     return res.status(400).send("email ou mot de passe incorrecte")
 
   const token = await user.createTokenAuth()
-  res
-    .header("x-auth-token", token)
-    .send(_.pick(user, ["_id", "name", "email", "profilePicture"]))
+  res.header("x-auth-token", token).send(user)
 })
 
 // recuperer le mot de passe en cas d'oublie (avoir le ticket de récupération (resetToken))
@@ -54,7 +52,7 @@ router.post("/forgotpassword", async (req, res) => {
 
 // aprées avoir eu l'email de résiliation du mot de passe on sera redérigé dans la page /api/auth/resetPassword/:resetToken
 router.put("/resetpassword/:resettoken", async (req, res) => {
-  const resetPasswordToken = await crypto
+  const resetPasswordToken = crypto
     .createHash("sha256")
     .update(req.params.resettoken)
     .digest("hex")
