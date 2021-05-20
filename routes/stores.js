@@ -184,7 +184,7 @@ router.delete("/:id", auth, async (req, res) => {
 
 // supprimer l'image
 router.delete("/storepictures/:id/:photoId", auth, async (req, res) => {
-  //auth et
+ 
   const article = await Store.findOne({
     _id: req.params.id,
     owner: req.user._id,

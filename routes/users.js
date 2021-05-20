@@ -26,7 +26,6 @@ router.put("/updatedetails", auth, async (req, res) => {
     phoneNumber: req.body.phoneNumber,
   }
   const user = await User.findByIdAndUpdate(req.user._id, fieldsToUpdate, {
-    runValidators: true,
     new: true,
   })
   if (!user)
@@ -68,7 +67,7 @@ router.put("/updatepassword", auth, async (req, res) => {
     )
 })
 
-// configurer la photo de profil :
+// configurer la photo de profile :
 const upload = multer({
   limits: {
     fileSize: 5000000,
