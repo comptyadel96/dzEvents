@@ -25,19 +25,17 @@ router.put("/updatedetails", auth, async (req, res) => {
     email: req.body.email,
     phoneNumber: req.body.phoneNumber,
   }
-  if (!fieldsToUpdate === null) {
-    const user = await User.findByIdAndUpdate(req.user._id, fieldsToUpdate, {
-      new: true,
-    })
-    if (!user)
-      return res
-        .status(500)
-        .send('une erreur s"est produite veuillez réessayer dans un moment')
-    res.status(200).json({
-      message: "Bravo vous avez mis à jour vos informations  !",
-      data: user,
-    })
-  }
+  const user = await User.findByIdAndUpdate(req.user._id, fieldsToUpdate, {
+    new: true,
+  })
+  if (!user)
+    return res
+      .status(500)
+      .send('une erreur s"est produite veuillez réessayer dans un moment')
+  res.status(200).json({
+    message: "Bravo vous avez mis à jour vos informations  !",
+    data: user,
+  })
 })
 
 // mettre à jour le mot de passe de l'utilisateur
