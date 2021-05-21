@@ -33,12 +33,11 @@ router.put("/updatedetails", auth, async (req, res) => {
       return res
         .status(500)
         .send('une erreur s"est produite veuillez réessayer dans un moment')
+    res.status(200).json({
+      message: "Bravo vous avez mis à jour vos informations  !",
+      data: user,
+    })
   }
-
-  res.status(200).json({
-    message: "Bravo vous avez mis à jour vos informations  !",
-    data: user,
-  })
 })
 
 // mettre à jour le mot de passe de l'utilisateur
