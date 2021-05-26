@@ -50,14 +50,10 @@ router.get("/:id", async (req, res) => {
 })
 // trouver les articles qu'on a nous meme publier
 router.get("/me/stores", auth, async (req, res) => {
-  const article = await Store.find({ owner: req.user._id }).populate(
-    "owner",
-    "-password -__v"
-  )
-  if (!article)
-    return res
-      .status(404)
-      .send("aucun article trouvé assurez vous de bien saisir votre recherche")
+  const article = await Store.find({ owner: req.user._id })
+    .populate("owner", "-password -__v")
+    .populate("photos", "url _id")
+  if (!article) return res.status(404).send("aucun article trouvé")
   res.status(200).send(article)
 })
 
