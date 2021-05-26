@@ -50,7 +50,10 @@ router.get("/:id", async (req, res) => {
 })
 // trouver les articles qu'on a nous meme publier
 router.get("/me/stores", auth, async (req, res) => {
-  const article = await Store.find({ owner: req.user._id })
+  const article = await Store.find({ owner: req.user._id }).populate(
+    "owner",
+    "-password -__v"
+  )
   if (!article)
     return res
       .status(404)
@@ -184,7 +187,6 @@ router.delete("/:id", auth, async (req, res) => {
 
 // supprimer l'image
 router.delete("/storepictures/:id/:photoId", auth, async (req, res) => {
- 
   const article = await Store.findOne({
     _id: req.params.id,
     owner: req.user._id,
