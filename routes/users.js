@@ -138,6 +138,30 @@ router.post("/", upload, async (req, res) => {
     )
 })
 
+// modifier la photo de l'utilisateur
+router.put("/me/profilPicture", auth, async (req, res) => {
+  const user = await User.findOne({ _id: req.user._id })
+  if (req.file) {
+    const buffer = await sharp(req.file.buffer)
+      .resize({ height: 350, width: 350 })
+      .png()
+      .toBuffer()
+    // convertir le buffer en lien
+    const parser = new DatauriParser()
+    const file = parser.format(
+      path.extname(req.file.originalname).toString(),
+      buffer
+    ).content
+    await uploader.upload(file.toString()).then(async (result, error) => {
+      if (error) {
+        console.log(error)
+      }
+      user.profilePicture = result.url
+      await user.save()
+    })
+  }
+})
+
 // supprimer l'image d'utilisateur
 router.delete("/me/profilpicture", auth, async (req, res) => {
   let user = await User.findOne({ _id: req.user._id })
