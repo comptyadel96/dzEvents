@@ -138,30 +138,25 @@ router.post("/", upload, async (req, res) => {
     )
 })
 
-// modifier la photo de l'utilisateur
-router.put("/me/profilPicture", auth, async (req, res) => {
-  const user = await User.findOne({ _id: req.user._id })
-  if (req.file) {
-    const buffer = await sharp(req.file.buffer)
-      .resize({ height: 350, width: 350 })
-      .png()
-      .toBuffer()
-    // convertir le buffer en lien
-    const parser = new DatauriParser()
-    const file = parser.format(
-      path.extname(req.file.originalname).toString(),
-      buffer
-    ).content
-    await uploader.upload(file.toString()).then(async (result, error) => {
-      if (error) {
-        console.log(error)
-      }
-      user.profilePicture = result.url
-      await user.save()
-    })
-  }
-})
+// ajouter une photo de profile si l'utilisateur n'a pas ajouter la photo au moment de la création de son compte
+router.put("/me/profilpicture", auth, upload, async (req, res) => {
+  let user = await User.findOne({ _id: req.user._id })
+  const buffer = await sharp(req.file.buffer)
+    .png()
+    .resize({ width: 200, height: 250 })
+    .toBuffer()
+  const parser = new DatauriParser()
+  const file = parser.format(
+    path.extname(req.file.originalname).toString(),
+    buffer
+  ).content
 
+  await uploader.upload(file).then(async (result) => {
+    user.profilePicture = result.url
+    await user.save()
+    res.send("photo mis à jour avec succés")
+  })
+})
 // supprimer l'image d'utilisateur
 router.delete("/me/profilpicture", auth, async (req, res) => {
   let user = await User.findOne({ _id: req.user._id })
@@ -192,24 +187,6 @@ const validateSchema2 = (password) => {
 
   return schema.validate(password)
 }
-// ajouter une photo de profile si l'utilisateur n'a pas ajouter la photo au moment de la création de son compte
-router.put("/me/profilpicture", auth, upload, async (req, res) => {
-  let user = await User.findOne({ _id: req.user._id })
-  const buffer = await sharp(req.file.buffer)
-    .png()
-    .resize({ width: 200, height: 250 })
-    .toBuffer()
-  const parser = new DatauriParser()
-  const file = parser.format(
-    path.extname(req.file.originalname).toString(),
-    buffer
-  ).content
 
-  await uploader.upload(file).then(async (result) => {
-    user.profilePicture = result.url
-    await user.save()
-    res.send("photo mis à jour avec succés")
-  })
-})
 
 module.exports = router
