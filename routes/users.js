@@ -154,7 +154,7 @@ router.put("/me/profilpicture", auth, upload, async (req, res) => {
   await uploader.upload(file).then(async (result) => {
     user.profilePicture = result.url
     await user.save()
-    res.send("photo mis à jour avec succés")
+    res.json({pic:result.url})
   })
 })
 // supprimer l'image d'utilisateur
