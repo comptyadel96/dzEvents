@@ -182,10 +182,10 @@ router.delete("/:id", auth, async (req, res) => {
 })
 
 // supprimer l'image
-router.delete("/storepictures/:id/:photoId", auth, async (req, res) => {
+router.delete("/storepictures/:id/:photoId",  async (req, res) => {
   const article = await Store.findOne({
     _id: req.params.id,
-    owner: req.user._id,
+    // owner: req.user._id,
   })
   if (!article)
     return res
