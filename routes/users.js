@@ -15,6 +15,7 @@ const { uploader } = require("../middlewares/cloudinaryConfig")
 // voir les infos de l'utilisateur déja connecter (ses propres infos de compte)
 router.get("/me", auth, async (req, res) => {
   const user = await User.findOne({ _id: req.user._id }).select("-password")
+  if (!user) return res.status(404).send("aucun utilisateur trouvé avec cet id")
   res.send(user)
 })
 
@@ -154,7 +155,7 @@ router.put("/me/profilpicture", auth, upload, async (req, res) => {
   await uploader.upload(file).then(async (result) => {
     user.profilePicture = result.url
     await user.save()
-    res.json({pic:result.url})
+    res.json({ pic: result.url })
   })
 })
 // supprimer l'image d'utilisateur
@@ -187,6 +188,5 @@ const validateSchema2 = (password) => {
 
   return schema.validate(password)
 }
-
 
 module.exports = router
