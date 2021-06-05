@@ -97,7 +97,7 @@ router.post("/", upload, async (req, res) => {
         "cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier"
       )
   }
-  user = await User.create({
+  const user = await User.create({
     name: req.body.name,
     email: req.body.email,
     phoneNumber: req.body.phoneNumber,
@@ -127,19 +127,7 @@ router.post("/", upload, async (req, res) => {
 
   // on donne un ticket pour le nouvelle utilisateur et on crée un header personalisé(x-auth-token)
   const token = await user.createTokenAuth()
-  return res
-    .header("x-auth-token", token)
-    .status(200)
-    .send(
-      _.pick(user, [
-        "_id",
-        "name",
-        "email",
-        "phoneNumber",
-        "firstTimePublished",
-        "profilePicture",
-      ])
-    )
+  return res.header("x-auth-token", token).status(200).send(user)
 })
 
 // ajouter une photo de profile si l'utilisateur n'a pas ajouter la photo au moment de la création de son compte
