@@ -97,10 +97,13 @@ router.post("/", upload, async (req, res) => {
         "cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier"
       )
   }
-  user = new User(
-    _.pick(req.body, ["name", "email", "password", "phoneNumber"])
-  )
-  await user.save()
+  user = User.create({
+    name: req.body.name,
+    email: req.body.email,
+    phoneNumber: req.body.phoneNumber,
+    password: req.body.password,
+  })
+
   // si l'utilisateur veut telecharger une photo de profile
   if (req.file) {
     const buffer = await sharp(req.file.buffer)
