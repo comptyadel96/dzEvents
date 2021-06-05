@@ -97,7 +97,10 @@ router.post("/", upload, async (req, res) => {
         "cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier"
       )
   }
-
+  user = new User(
+    _.pick(req.body, ["name", "email", "password", "phoneNumber"])
+  )
+  await user.save()
   // si l'utilisateur veut telecharger une photo de profile
   if (req.file) {
     const buffer = await sharp(req.file.buffer)
@@ -118,10 +121,7 @@ router.post("/", upload, async (req, res) => {
       await user.save()
     })
   }
-  user = new User(
-    _.pick(req.body, ["name", "email", "password", "phoneNumber"])
-  )
-  await user.save()
+
   // on donne un ticket pour le nouvelle utilisateur et on crée un header personalisé(x-auth-token)
   const token = await user.createTokenAuth()
   return res
