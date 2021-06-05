@@ -97,7 +97,7 @@ router.post("/", upload, async (req, res) => {
         "cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier"
       )
   }
-  user = User.create({
+  user = await User.create({
     name: req.body.name,
     email: req.body.email,
     phoneNumber: req.body.phoneNumber,
