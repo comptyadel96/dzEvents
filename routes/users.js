@@ -120,13 +120,12 @@ router.post("/", upload, async (req, res) => {
       user.profilePicture = result.url
       await user.save()
     })
-  } else {
-    return res.status(200).send(post)
   }
   // on donne un ticket pour le nouvelle utilisateur et on crée un header personalisé(x-auth-token)
   const token = await user.createTokenAuth()
   return res
     .header("x-auth-token", token)
+    .status(200)
     .send(
       _.pick(user, [
         "_id",
