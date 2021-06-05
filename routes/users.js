@@ -92,7 +92,7 @@ router.post("/", upload, async (req, res) => {
   let user = await User.findOne({ email: req.body.email })
   if (user)
     return res
-      .status(401)
+      .status(400)
       .send(
         "cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier"
       )

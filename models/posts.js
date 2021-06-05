@@ -47,7 +47,10 @@ const postSchema = new mongoose.Schema(
     },
     dateDebut: {
       type: Date,
-      // required: [true, 'vous devez définir une date de début pour cet évenement '],
+      required: [
+        true,
+        "vous devez définir une date de début pour cet évenement ",
+      ],
       min: [
         new Date(Date.now() + 1000 * 60 * 5),
         "la date doit étre égal ou supérieure a la date actuel",
@@ -60,12 +63,19 @@ const postSchema = new mongoose.Schema(
         "la date de fin doit étre supérieure a la date du début",
       ],
     },
-    geometry: [Number],
+    geometry: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: [Number],
+    },
 
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      // required: true,
+      required: true,
     },
     status: {
       type: String,
