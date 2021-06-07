@@ -42,10 +42,7 @@ const userSchema = new mongoose.Schema({
     ],
     maxLength: 50,
     minLength: 10,
-    unique: [
-      true,
-      "le numéro de téléphone doit étre unique pour chaque utilisateur",
-    ],
+    unique:true
   },
   profilePicture: {
     type: String,
