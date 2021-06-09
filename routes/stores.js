@@ -40,7 +40,7 @@ router.get("/", async (req, res) => {
 // trouver un article par son id :
 router.get("/:id", async (req, res) => {
   const article = await Store.findById(req.params.id)
-    .populate("owner", "-password -profilePicture -__v ")
+    .populate("owner", "-password profilePicture -__v ")
     .populate("photos", "url _id")
   if (!article)
     return res
