@@ -32,7 +32,7 @@ router.get("/", async (req, res) => {
       .skip(startIndex)
       .limit(limit)
       .sort({ createdAt: -1 })
-      .populate("owner", " -password -profilePicture")
+      .populate("owner", " -password ")
       .populate("photos", "url _id ")
     return res.status(200).send(article)
   }
