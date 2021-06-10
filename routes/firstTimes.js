@@ -25,7 +25,10 @@ router.get("/", async (req, res) => {
 // first event avec l'identificateur :
 router.get("/:id", async (req, res) => {
   try {
-    const first = await FirstTime.findById(req.params.id).populate('owner',"-password")
+    const first = await FirstTime.findById(req.params.id).populate(
+      "owner",
+      "-password"
+    )
     res.status(200).send(first)
   } catch (e) {
     res.status(404).send("aucun évènement trouver désolé ")
@@ -34,7 +37,10 @@ router.get("/:id", async (req, res) => {
 
 // voir son propre first event
 router.get("/me/firstevent", auth, async (req, res) => {
-  const first = await FirstTime.findOne({ owner: req.user._id })
+  const first = await FirstTime.findOne({ owner: req.user._id }).populate(
+    "owner",
+    "-password -__v"
+  )
   if (!first) return res.status(404).send("aucun élément trouver")
   res.status(200).send(first)
 })
