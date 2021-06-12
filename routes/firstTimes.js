@@ -116,7 +116,7 @@ router.put("/:id", auth,upload, async (req, res) => {
       { runValidators: true, new: true }
     )
 
-    if (req.file) {
+    
       const buffer = await sharp(req.file.buffer)
         .resize({ width: 350, height: 300 })
         .png()
@@ -134,7 +134,7 @@ router.put("/:id", auth,upload, async (req, res) => {
         await first.save()
         res.send("photo télécharger avec succés")
       })
-    }
+    
     if (!first) {
       return res.status(404).send(" oops ! cet élèment est introuvable :( ")
     }
