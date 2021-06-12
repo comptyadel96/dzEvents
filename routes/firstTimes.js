@@ -115,6 +115,26 @@ router.put("/:id", auth, async (req, res) => {
       { ...req.body },
       { runValidators: true, new: true }
     ).populate("owner", "-password -__v")
+   
+    if (req.file) {
+      const buffer = await sharp(req.file.buffer)
+        .resize({ width: 350, height: 300 })
+        .png()
+        .toBuffer()
+      // convertir le buffer en string(base64)
+      const parser = new DatauriParser()
+      const file = parser.format(
+        path.extname(req.file.originalname).toString(),
+        buffer
+      ).content
+
+      await uploader.upload(file).then(async (result) => {
+        const imageUri = result.url
+        first.photo = imageUri
+        await first.save()
+        res.send("photo télécharger avec succés")
+      })
+    }
     if (!first)
       return res.status(404).send(" oops ! cet élèment est introuvable :( ")
     await first.save()
