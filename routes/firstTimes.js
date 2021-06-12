@@ -9,7 +9,7 @@ const auth = require("../middlewares/auth")
 const DatauriParser = require("datauri/parser")
 const { uploader } = require("../middlewares/cloudinaryConfig")
 const {multerConfig}=require("../middlewares/multerConfig")
-
+router.use(multerConfig())
 
 // voir tous les events de la premiere fois :
 router.get("/", async (req, res) => {

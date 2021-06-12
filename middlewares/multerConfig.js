@@ -1,4 +1,6 @@
 const multer = require("multer")
+
+
 const upload = multer({
   limits: {
     fileSize: 5000000,
@@ -14,9 +16,11 @@ const upload = multer({
     cb(undefined, true)
   },
 })
+
 const multerConfig = (req, res, next) => {
   if (!req.file) {
     upload.none()
+    console.log("no file");
     next()
   }
   if (req.file) {
