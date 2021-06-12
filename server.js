@@ -33,14 +33,13 @@ mongoose
 // Middleware
 app.use(express.static("./public"))
 app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.json())
 app.use(express.json())
 app.use(helmet())
 app.use(compression())
 app.use(cors())
 process.env.NODE_ENV === "development" && app.use(morgan("dev"))
-// set the view engine
-app.set("view engine", "pug")
-app.set("views", "./views")
+
 // Routes :
 app.use("/dzevents/v1/users", users)
 app.use("/dzevents/v1/auth", auths)
