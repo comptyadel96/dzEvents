@@ -114,8 +114,8 @@ router.put("/:id", auth, async (req, res) => {
       { _id, owner: req.user._id },
       { ...req.body },
       { runValidators: true, new: true }
-    ).populate("owner", "-password -__v")
-   
+    )
+
     if (req.file) {
       const buffer = await sharp(req.file.buffer)
         .resize({ width: 350, height: 300 })
@@ -135,8 +135,10 @@ router.put("/:id", auth, async (req, res) => {
         res.send("photo télécharger avec succés")
       })
     }
-    if (!first)
+    if (!first) {
       return res.status(404).send(" oops ! cet élèment est introuvable :( ")
+    }
+
     await first.save()
     res.status(200).send(first)
   } else {
