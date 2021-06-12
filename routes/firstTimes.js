@@ -8,6 +8,8 @@ const { User } = require("../models/user")
 const auth = require("../middlewares/auth")
 const DatauriParser = require("datauri/parser")
 const { uploader } = require("../middlewares/cloudinaryConfig")
+const {multerConfig}=require("../middlewares/multerConfig")
+
 
 // voir tous les events de la premiere fois :
 router.get("/", async (req, res) => {
@@ -45,21 +47,21 @@ router.get("/me/firstevent", auth, async (req, res) => {
   res.status(200).send(first)
 })
 // configurer la photo pour le firsttime
-const upload = multer({
-  limits: {
-    fileSize: 5000000,
-  },
-  fileFilter(req, file, cb) {
-    if (!file.originalname.match(/\.(jpg|jpeg|png)$/gi)) {
-      return cb(
-        new Error(
-          "le type de fichier doit étre une image de taille inférieure ou égale a 1.5MBs"
-        )
-      )
-    }
-    cb(undefined, true)
-  },
-}).single("firstTimePic")
+// const upload = multer({
+//   limits: {
+//     fileSize: 5000000,
+//   },
+//   fileFilter(req, file, cb) {
+//     if (!file.originalname.match(/\.(jpg|jpeg|png)$/gi)) {
+//       return cb(
+//         new Error(
+//           "le type de fichier doit étre une image de taille inférieure ou égale a 1.5MBs"
+//         )
+//       )
+//     }
+//     cb(undefined, true)
+//   },
+// }).single("firstTimePic")
 
 // ajouter un first event
 router.post("/", auth, upload, async (req, res) => {
@@ -107,7 +109,7 @@ router.post("/", auth, upload, async (req, res) => {
 })
 
 // modifier first event
-router.put("/:id", auth,upload, async (req, res) => {
+router.put("/:id", auth,multerConfig, async (req, res) => {
   const _id = req.params.id
   if (!req.body.owner || !req.body._id) {
     const first = await FirstTime.findOneAndUpdate(
@@ -116,7 +118,7 @@ router.put("/:id", auth,upload, async (req, res) => {
       { runValidators: true, new: true }
     )
 
-    
+    if (req.file) {
       const buffer = await sharp(req.file.buffer)
         .resize({ width: 350, height: 300 })
         .png()
@@ -134,7 +136,8 @@ router.put("/:id", auth,upload, async (req, res) => {
         await first.save()
         res.send("photo télécharger avec succés")
       })
-    
+    }
+
     if (!first) {
       return res.status(404).send(" oops ! cet élèment est introuvable :( ")
     }
