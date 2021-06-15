@@ -109,7 +109,7 @@ router.post("/", auth, upload, async (req, res) => {
 })
 
 // modifier first event
-router.put("/:id", auth,multerConfig, async (req, res) => {
+router.put("/:id", auth,upload, async (req, res) => {
   const _id = req.params.id
   if (!req.body.owner || !req.body._id) {
     const first = await FirstTime.findOneAndUpdate(
