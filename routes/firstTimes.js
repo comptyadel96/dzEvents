@@ -9,8 +9,6 @@ const auth = require("../middlewares/auth")
 const DatauriParser = require("datauri/parser")
 const { uploader } = require("../middlewares/cloudinaryConfig")
 
-
-
 // voir tous les events de la premiere fois :
 router.get("/", async (req, res) => {
   const page = parseInt(req.query.page)
@@ -61,10 +59,10 @@ const upload = multer({
     }
     cb(undefined, true)
   },
-}).single("firstTimePic")
+})
 
 // ajouter un first event
-router.post("/", auth, upload, async (req, res) => {
+router.post("/", auth, upload.single("firstTimePic"), async (req, res) => {
   const user = await User.findOne({ _id: req.user._id })
   // verifier si l'utilisateur n'a pas encore publier dans la section (1 iére fois)
   if (!user.firstTimePublished) {
@@ -75,6 +73,7 @@ router.post("/", auth, upload, async (req, res) => {
       wilaya: req.body.wilaya,
       owner: req.user._id,
     })
+    console.log(req.file);
     if (req.file) {
       const buffer = await sharp(req.file.buffer)
         .resize({ width: 350, height: 300 })
@@ -109,7 +108,7 @@ router.post("/", auth, upload, async (req, res) => {
 })
 
 // modifier first event
-router.put("/:id", auth,upload, async (req, res) => {
+router.put("/:id", auth, upload.single("firstTimePic"), async (req, res) => {
   const _id = req.params.id
   if (!req.body.owner || !req.body._id) {
     const first = await FirstTime.findOneAndUpdate(
