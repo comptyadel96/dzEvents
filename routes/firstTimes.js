@@ -53,7 +53,7 @@ const upload = multer({
     if (!file.originalname.match(/\.(jpg|jpeg|png)$/gi)) {
       return cb(
         new Error(
-          "le type de fichier doit étre une image de taille inférieure ou égale a 1.5MBs"
+          "le type de fichier doit étre une image de taille inférieure ou égale a 5MBs"
         )
       )
     }

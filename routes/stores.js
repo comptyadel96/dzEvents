@@ -124,37 +124,37 @@ router.post("/", auth, upload, async (req, res) => {
 })
 
 // ajouter d'autre photos aprés la création de l'article dans le store (si jamais l'utilisateur voudrait modifier ou ajouter des photos)
-router.patch("/:id/pictures", [auth, upload], async (req, res) => {
-  let article = await Store.findOne({ _id: req.params.id, owner: req.user._id })
-  if (req.files) {
-    await Promise.all(
-      req.files.map(async (file) => {
-        const buffer = await sharp(file.buffer)
-          .resize({ height: 350, width: 350 })
-          .png()
-          .toBuffer()
-        // convertir le buffer en lien
-        const parser = new DatauriParser()
-        const files = parser.format(
-          path.extname(file.originalname).toString(),
-          buffer
-        ).content
+// router.patch("/:id/pictures", [auth, upload], async (req, res) => {
+//   let article = await Store.findOne({ _id: req.params.id, owner: req.user._id })
+//   if (req.files) {
+//     await Promise.all(
+//       req.files.map(async (file) => {
+//         const buffer = await sharp(file.buffer)
+//           .resize({ height: 350, width: 350 })
+//           .png()
+//           .toBuffer()
+//         // convertir le buffer en lien
+//         const parser = new DatauriParser()
+//         const files = parser.format(
+//           path.extname(file.originalname).toString(),
+//           buffer
+//         ).content
 
-        await uploader.upload(files.toString()).then(async (result) => {
-          if (article.photos.length < 5) {
-            const photo = await Photos.create({ url: result.url })
-            await article.photos.push(photo)
-            return res.status(200).send("photos telecharger avec succes")
-          } else {
-            return res.send("pas plus de 5 photos svp")
-          }
-        })
-      })
-    )
-  } else {
-    return res.status(400).send("vous devez aumoins télécharger une image")
-  }
-})
+//         await uploader.upload(files.toString()).then(async (result) => {
+//           if (article.photos.length < 5) {
+//             const photo = await Photos.create({ url: result.url })
+//             await article.photos.push(photo)
+//             return res.status(200).send("photos telecharger avec succes")
+//           } else {
+//             return res.send("pas plus de 5 photos svp")
+//           }
+//         })
+//       })
+//     )
+//   } else {
+//     return res.status(400).send("vous devez aumoins télécharger une image")
+//   }
+// })
 
 // modifier un article dans le store
 router.put("/:id", upload, auth, async (req, res) => {
@@ -167,6 +167,32 @@ router.put("/:id", upload, auth, async (req, res) => {
       },
       { runValidators: true, new: true }
     )
+    if (req.files) {
+      await Promise.all(
+        req.files.map(async (file) => {
+          const buffer = await sharp(file.buffer)
+            .resize({ height: 350, width: 350 })
+            .png()
+            .toBuffer()
+          // convertir le buffer en lien
+          const parser = new DatauriParser()
+          const files = parser.format(
+            path.extname(file.originalname).toString(),
+            buffer
+          ).content
+  
+          await uploader.upload(files.toString()).then(async (result) => {
+            if (article.photos.length < 5) {
+              const photo = await Photos.create({ url: result.url })
+              await article.photos.push(photo)
+              return res.status(200).send("photos telecharger avec succes")
+            } else {
+              return res.send("pas plus de 5 photos svp")
+            }
+          })
+        })
+      )
+    } 
     if (!article)
       return res.status(403).send("vous n'étes pas autorisé à faire cet action")
     await article.save()
