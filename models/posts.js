@@ -51,17 +51,17 @@ const postSchema = new mongoose.Schema(
         true,
         "vous devez définir une date de début pour cet évenement ",
       ],
-      min: [
-        new Date(Date.now() + 1000 * 60 * 5),
-        "la date doit étre égal ou supérieure a la date actuel",
-      ],
+      // min: [
+      //   new Date(Date.now() + 1000 * 60 * 5),
+      //   "la date doit étre égal ou supérieure a la date actuel",
+      // ],
     },
     dateFin: {
       type: Date,
-      min: [
-        new Date(Date.now() + 1000 * 60 * 60).toDateString(),
-        "la date de fin doit étre supérieure a la date du début",
-      ],
+      // min: [
+      //   new Date(Date.now() + 1000 * 60 * 60).toDateString(),
+      //   "la date de fin doit étre supérieure a la date du début",
+      // ],
     },
     geometry: {
       type: {
