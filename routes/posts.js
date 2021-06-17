@@ -122,7 +122,7 @@ router.post("/", auth, upload, async (req, res) => {
     dateDebut,
     dateFin,
   })
-  
+
   if (req.file) {
     const buffer = await sharp(req.file.buffer)
       .resize({ height: 350, width: 350 })
@@ -163,34 +163,14 @@ router.put("/:id", auth, async (req, res) => {
   const _id = req.params.id
   // on s'assure que l'utilisateur ne peut pas modifer le _id et le owner dans la bdd
   if (!req.body.owner || !req.body._id) {
-    try {
-      const post = await Posts.findOneAndUpdate(
-        { _id, owner: req.user._id },
-
-        { ...req.body },
-
-        {
-          runValidators: true,
-          new: true,
-        }
-      )
-      if (!post) return res.status(400).send("une erreur est servenu!")
-      await post.save()
-      res
-        .status(200)
-        .send(
-          _.pick(post, [
-            "titre",
-            "categorie",
-            "dateDebut",
-            "dateFin",
-            "region",
-            "description",
-          ])
-        )
-    } catch (e) {
-      res.status(404).send("error")
-    }
+    const post = await Posts.findOneAndUpdate(
+      { _id, owner: req.user._id },
+      { ...req.body },
+      { runValidators: true, new: true }
+    )
+    if (!post) return res.status(400).send("une erreur est servenu!")
+    await post.save()
+    res.status(200).send(post)
   } else {
     res.status(403).send("vous pouvez pas modifier cet élément")
   }
