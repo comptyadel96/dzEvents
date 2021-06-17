@@ -63,14 +63,14 @@ const postSchema = new mongoose.Schema(
       //   "la date de fin doit étre supérieure a la date du début",
       // ],
     },
-    geometry: {
-      type: {
-        type: String,
-        enum: ["Point"],
-        default: "Point",
-      },
-      coordinates: [Number],
-    },
+    // geometry: {
+    //   type: {
+    //     type: String,
+    //     enum: ["Point"],
+    //     default: "Point",
+    //   },
+    //   coordinates: [Number],
+    // },
 
     owner: {
       type: mongoose.Schema.Types.ObjectId,
