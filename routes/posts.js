@@ -5,10 +5,10 @@ const _ = require("lodash")
 const multer = require("multer")
 const sharp = require("sharp")
 const path = require("path")
-const { uploader } = require("../middlewares/cloudinaryConfig")
 const DatauriParser = require("datauri/parser")
 //middleware
 const auth = require("../middlewares/auth")
+const { uploader } = require("../middlewares/cloudinaryConfig")
 
 // avoir la liste de tous les événements:
 router.get("/", async (req, res) => {
@@ -193,6 +193,34 @@ router.put("/:id", auth, async (req, res) => {
     }
   } else {
     res.status(403).send("vous pouvez pas modifier cet élément")
+  }
+})
+// modifier la photo d'un évènement
+router.patch("/:id/updatepicture", auth, upload, async (req, res) => {
+  const post = await Posts.findOne({ _id: req.params.id, owner: req.user._id })
+  if (!post)
+    return res
+      .status(404)
+      .send("aucun évènement trouver avec cet _id et cet utilisateur")
+  if (req.file) {
+    const buffer = await sharp(req.file.buffer)
+      .resize({ height: 350, width: 350 })
+      .png()
+      .toBuffer()
+    // convertir le buffer en lien
+    const parser = new DatauriParser()
+    const file = parser.format(
+      path.extname(req.file.originalname).toString(),
+      buffer
+    ).content
+    await uploader.upload(file.toString()).then(async (result, error) => {
+      if (error) {
+        console.log(error)
+      }
+      post.image = result.url
+      await post.save()
+      return res.status(200).send("photo telecharger avec succeés")
+    })
   }
 })
 

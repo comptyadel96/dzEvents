@@ -59,10 +59,10 @@ const upload = multer({
     }
     cb(undefined, true)
   },
-})
+}).single("firstTimePic")
 
 // ajouter un first event
-router.post("/", auth, upload.single("firstTimePic"), async (req, res) => {
+router.post("/", auth, upload, async (req, res) => {
   const user = await User.findOne({ _id: req.user._id })
   // verifier si l'utilisateur n'a pas encore publier dans la section (1 iére fois)
   if (!user.firstTimePublished) {
@@ -73,7 +73,7 @@ router.post("/", auth, upload.single("firstTimePic"), async (req, res) => {
       wilaya: req.body.wilaya,
       owner: req.user._id,
     })
-    console.log(req.file);
+
     if (req.file) {
       const buffer = await sharp(req.file.buffer)
         .resize({ width: 350, height: 300 })
@@ -107,8 +107,8 @@ router.post("/", auth, upload.single("firstTimePic"), async (req, res) => {
   }
 })
 
-// modifier first event
-router.put("/:id", auth, upload.single("firstTimePic"), async (req, res) => {
+// modifier first event(sans modifier la photo)
+router.put("/:id", auth, async (req, res) => {
   const _id = req.params.id
   if (!req.body.owner || !req.body._id) {
     const first = await FirstTime.findOneAndUpdate(
@@ -116,35 +116,43 @@ router.put("/:id", auth, upload.single("firstTimePic"), async (req, res) => {
       { ...req.body },
       { runValidators: true, new: true }
     )
-
-    if (req.file) {
-      const buffer = await sharp(req.file.buffer)
-        .resize({ width: 350, height: 300 })
-        .png()
-        .toBuffer()
-      // convertir le buffer en string(base64)
-      const parser = new DatauriParser()
-      const file = parser.format(
-        path.extname(req.file.originalname).toString(),
-        buffer
-      ).content
-
-      await uploader.upload(file).then(async (result) => {
-        const imageUri = result.url
-        first.photo = imageUri
-        await first.save()
-        res.send("photo télécharger avec succés")
-      })
-    }
-
     if (!first) {
       return res.status(404).send(" oops ! cet élèment est introuvable :( ")
     }
-
     await first.save()
     res.status(200).send(first)
   } else {
     res.status(403).send("vous n avez pas le droit de modifier cet élément")
+  }
+})
+
+// modifier la photo du first event
+router.patch("/:id/updatepicture", auth, upload, async (req, res) => {
+  const first = await FirstTime.findOne({
+    _id: req.params.id,
+    owner: req.user._id,
+  })
+  if (!first)
+    return res.status(404).send("aucun first event trouvé pour cet utilisateur")
+  // telecharger l'image
+  if (req.file) {
+    const buffer = await sharp(req.file.buffer)
+      .resize({ width: 350, height: 300 })
+      .png()
+      .toBuffer()
+    // convertir le buffer en string(base64)
+    const parser = new DatauriParser()
+    const file = parser.format(
+      path.extname(req.file.originalname).toString(),
+      buffer
+    ).content
+
+    await uploader.upload(file).then(async (result) => {
+      const imageUri = result.url
+      first.photo = imageUri
+      await first.save()
+      res.status(200).send("photo mis à jour avec  succés")
+    })
   }
 })
 
