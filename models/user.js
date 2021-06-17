@@ -42,7 +42,6 @@ const userSchema = new mongoose.Schema({
     ],
     maxLength: 50,
     minLength: 10,
-    unique:true
   },
   profilePicture: {
     type: String,
@@ -78,7 +77,7 @@ userSchema.methods.createTokenAuth = async function () {
       name: this.name,
       email: this.email,
       profilePicture: this.profilePicture,
-      phoneNumber:this.phoneNumber
+      phoneNumber: this.phoneNumber,
     },
     process.env.JWT_TOKEN_KEY,
     {
