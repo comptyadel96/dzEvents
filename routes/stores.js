@@ -144,6 +144,8 @@ router.patch("/:id/pictures", [auth, upload], async (req, res) => {
           if (article.photos.length < 5) {
             const photo = await Photos.create({ url: result.url })
             await article.photos.push(photo)
+            await article.save()
+            console.log(photo)
             return res.status(200).send("photos telecharger avec succes")
           } else {
             return res.send("pas plus de 5 photos svp")
@@ -157,7 +159,7 @@ router.patch("/:id/pictures", [auth, upload], async (req, res) => {
 })
 
 // modifier un article dans le store
-router.put("/:id",auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   const _id = req.params.id
   if (!req.body.owner || !req.body._id) {
     let article = await Store.findOneAndUpdate(
