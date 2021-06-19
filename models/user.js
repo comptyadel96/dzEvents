@@ -78,6 +78,7 @@ userSchema.methods.createTokenAuth = async function () {
       email: this.email,
       profilePicture: this.profilePicture,
       phoneNumber: this.phoneNumber,
+      firstTimePublished: this.firstTimePublished,
     },
     process.env.JWT_TOKEN_KEY,
     {

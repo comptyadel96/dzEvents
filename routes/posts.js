@@ -72,7 +72,7 @@ router.get("/me/events", auth, async (req, res) => {
 router.get("/:id", async (req, res) => {
   const post = await Posts.findById(req.params.id).populate(
     "owner",
-    "-password -__v"
+    "-password"
   )
   await post.getStatus()
   if (!post)
@@ -155,7 +155,7 @@ router.delete("/:id/eventpicture", auth, async (req, res) => {
   }
   post.image = undefined
   await post.save()
-  res.send("la photo a bien été supprimer")
+  res.status(200).send("la photo a bien été supprimer")
 })
 
 // modifier un événement
