@@ -91,11 +91,8 @@ router.post("/", upload, async (req, res) => {
   // verifier si l'utilisateur n'a pas déja un compte
   let user = await User.findOne({ email: req.body.email })
   if (user) {
-    return res
-      .status(400)
-      .send(
-        "cet email a deja été utiliser si vous avez oublier le mot de passe appuyer sur mot de passe oublier"
-      )
+    return res.json({alredyRegister:"cet email a déja été utiliser"})
+    
   }
    user = await User.create({
     name: req.body.name,
