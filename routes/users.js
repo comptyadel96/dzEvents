@@ -91,10 +91,9 @@ router.post("/", upload, async (req, res) => {
   // verifier si l'utilisateur n'a pas déja un compte
   let user = await User.findOne({ email: req.body.email })
   if (user) {
-    return res.json({alredyRegister:"cet email a déja été utiliser"})
-    
+    return res.status(400).json("cet email a déja été utiliser")
   }
-   user = await User.create({
+  user = await User.create({
     name: req.body.name,
     email: req.body.email,
     phoneNumber: req.body.phoneNumber,
